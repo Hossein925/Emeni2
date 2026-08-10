@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, AlertTriangle, Building2, Calendar, Eye, CheckCircle, Clock, X, Sparkles } from 'lucide-react';
+import { ArrowRight, AlertTriangle, Building2, Calendar, Eye, CheckCircle, Clock, X, Sparkles, Edit3, ListFilter } from 'lucide-react';
 import { ErrorReport, Department } from '../types';
 import { DataAccessLayer } from '../services/dal';
 import { MedicalAiAnalyzerModal } from './MedicalAiAnalyzerModal';
+import { ErrorReportFormBuilder } from './ErrorReportFormBuilder';
 
 interface ErrorReportsAdminProps {
   onBack: () => void;
 }
 
 export const ErrorReportsAdmin: React.FC<ErrorReportsAdminProps> = ({ onBack }) => {
+  const [activeAdminTab, setActiveAdminTab] = useState<'reports_list' | 'form_builder'>('reports_list');
   const [reports, setReports] = useState<ErrorReport[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [selectedDeptId, setSelectedDeptId] = useState('all');
@@ -41,24 +43,59 @@ export const ErrorReportsAdmin: React.FC<ErrorReportsAdminProps> = ({ onBack }) 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn text-right">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-indigo-200/60">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-4 border-b border-indigo-200/60">
         <div>
           <h2 className="text-2xl sm:text-3xl font-black text-indigo-950 flex items-center gap-2">
             <AlertTriangle className="w-7 h-7 text-rose-600" />
-            گزارش‌های خطای ثبت‌شده پرسنل
+            مدیریت، پایش و طراحی فرم گزارش خطا
           </h2>
           <p className="text-xs sm:text-sm text-indigo-900/80 font-bold mt-1">
-            پایش و تحلیل گزارش‌های واصله از بخش‌ها جهت تحلیل علل ریشه‌ای (RCA) و ارتقای ایمنی
+            مشاهده گزارش‌های دریافتی، تحلیل RCA و ویرایش آنلاین سوالات فرم گزارش خطای بیمارستان
           </p>
         </div>
+
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 active:scale-95 transition cursor-pointer ring-2 ring-amber-300/40"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 active:scale-95 transition cursor-pointer ring-2 ring-amber-300/40 self-start md:self-auto"
         >
           <ArrowRight className="w-4 h-4 text-slate-950" />
           <span>بازگشت به پنل ادمین</span>
         </button>
       </div>
+
+      {/* Main Tab Navigation */}
+      <div className="flex items-center gap-3 mb-8 bg-white p-2 rounded-2xl border-2 border-indigo-200 shadow-lg overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => setActiveAdminTab('reports_list')}
+          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs sm:text-sm transition cursor-pointer whitespace-nowrap ${
+            activeAdminTab === 'reports_list'
+              ? 'bg-gradient-to-r from-indigo-900 to-slate-900 text-amber-300 shadow-md ring-2 ring-indigo-400/50'
+              : 'text-slate-700 hover:bg-slate-100'
+          }`}
+        >
+          <ListFilter className="w-4 h-4 text-amber-400" />
+          <span>گزارش‌های خطای ثبت‌شده پرسنل ({reports.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveAdminTab('form_builder')}
+          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs sm:text-sm transition cursor-pointer whitespace-nowrap ${
+            activeAdminTab === 'form_builder'
+              ? 'bg-gradient-to-r from-indigo-900 to-slate-900 text-amber-300 shadow-md ring-2 ring-indigo-400/50'
+              : 'text-slate-700 hover:bg-slate-100'
+          }`}
+        >
+          <Edit3 className="w-4 h-4 text-amber-400" />
+          <span>ویرایش و طراحی سوالات فرم گزارش خطا</span>
+        </button>
+      </div>
+
+      {activeAdminTab === 'form_builder' ? (
+        <ErrorReportFormBuilder onSaved={loadReports} />
+      ) : (
+        <>
 
       {/* Filter Bar */}
       <div className="bg-white border-2 border-indigo-200 rounded-3xl p-5 mb-8 shadow-xl flex items-center justify-between text-slate-900">
@@ -171,6 +208,64 @@ export const ErrorReportsAdmin: React.FC<ErrorReportsAdminProps> = ({ onBack }) 
               </div>
             </div>
 
+            {/* Resolution & Corrective Action Section */}
+            <div className="p-4 bg-indigo-50/80 rounded-2xl border-2 border-indigo-200 space-y-4">
+              <h4 className="text-xs font-black text-indigo-950 flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-emerald-600" />
+                ثبت مصوبه و اقدام اصلاحی ادمین ایمنی
+              </h4>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700">متن مصوبه / تصمیم کمیته درباره این خطا:</label>
+                <textarea
+                  rows={2}
+                  value={selectedReport.resolution || ''}
+                  onChange={(e) => setSelectedReport({ ...selectedReport, resolution: e.target.value })}
+                  placeholder="مثلاً: بازبینی پروتکل تزریق دارو، برگزاری کارگاه تحویل ایمن و..."
+                  className="w-full bg-white border-2 border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700">اقدام اصلاحی و مسئول پیگیری:</label>
+                <input
+                  type="text"
+                  value={selectedReport.correctiveAction || ''}
+                  onChange={(e) => setSelectedReport({ ...selectedReport, correctiveAction: e.target.value })}
+                  placeholder="مثلاً: مسئول سوپروایزر آموزشی - مهلت اجرا: ۱۰ روز"
+                  className="w-full bg-white border-2 border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              {/* Toggle Public Visibility */}
+              <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-indigo-200">
+                <span className="text-xs font-black text-slate-800">
+                  نمایش این مصوبه در صفحه عمومی مصوبات ایمنی کادر درمان:
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!selectedReport.isPublic}
+                    onChange={(e) => setSelectedReport({ ...selectedReport, isPublic: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
+              </div>
+
+              <button
+                onClick={async () => {
+                  if (!selectedReport) return;
+                  await DataAccessLayer.saveErrorReport(selectedReport);
+                  setReports((prev) => prev.map((r) => (r.id === selectedReport.id ? selectedReport : r)));
+                  alert('مصوبه و تنظیمات انتشار با موفقیت ذخیره شد.');
+                }}
+                className="w-full py-2.5 rounded-xl bg-indigo-900 hover:bg-indigo-950 text-white font-black text-xs transition cursor-pointer shadow-md"
+              >
+                ذخیره مصوبه و تنظیمات انتشار
+              </button>
+            </div>
+
             <div className="pt-4 border-t-2 border-slate-200 flex items-center justify-between gap-3">
               <button
                 onClick={() => {
@@ -202,6 +297,8 @@ export const ErrorReportsAdmin: React.FC<ErrorReportsAdminProps> = ({ onBack }) 
         title={aiModalTitle}
         data={aiModalData}
       />
+        </>
+      )}
     </div>
   );
 };

@@ -28,6 +28,7 @@ export const SafetyVisitsAdmin: React.FC<SafetyVisitsAdminProps> = ({ onBack }) 
   const [observations, setObservations] = useState('');
   const [resolutions, setResolutions] = useState('');
   const [followUpPerson, setFollowUpPerson] = useState('');
+  const [isPublic, setIsPublic] = useState(true);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   useEffect(() => {
@@ -68,6 +69,7 @@ export const SafetyVisitsAdmin: React.FC<SafetyVisitsAdminProps> = ({ onBack }) 
       observations: observations.trim(),
       resolutions: resolutions.trim(),
       followUpPerson: followUpPerson.trim() || 'سوپروایزر ایمنی',
+      isPublic,
     });
 
     setSavedSuccess(true);
@@ -228,6 +230,22 @@ export const SafetyVisitsAdmin: React.FC<SafetyVisitsAdminProps> = ({ onBack }) 
                     className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-2xl text-slate-900 font-bold placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
                   />
                 </div>
+              </div>
+
+              {/* Public Visibility Toggle */}
+              <div className="flex items-center justify-between p-3.5 bg-[#06162a] rounded-2xl border border-cyan-500/30">
+                <span className="text-xs font-bold text-cyan-100">
+                  نمایش مصوبات این بازدید در صفحه اعلان‌های عمومی ایمنی بیمار:
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isPublic}
+                    onChange={(e) => setIsPublic(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
               </div>
 
               <div className="pt-2 text-left">

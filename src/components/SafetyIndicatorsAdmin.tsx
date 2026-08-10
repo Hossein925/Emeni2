@@ -12,6 +12,11 @@ import {
   Layers,
   BarChart3,
   Printer,
+  Edit,
+  Plus,
+  Save,
+  Trash2,
+  Settings2,
 } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import {
@@ -22,17 +27,32 @@ import {
 import { DataAccessLayer } from '../services/dal';
 import { JALALI_MONTHS, toPersianDigits, getCurrentJalaliYear, getCurrentJalaliMonth } from '../utils/jalali';
 import { exportToExcel } from '../utils/exportUtils';
-import { CLINICAL_INDICATORS_MATRIX, CLINICAL_DEPARTMENTS } from '../data/indicators';
+import { CLINICAL_INDICATORS_MATRIX, CLINICAL_DEPARTMENTS, ClinicalIndicatorItem } from '../data/indicators';
 
 interface SafetyIndicatorsAdminProps {
   onBack: () => void;
 }
 
 export const SafetyIndicatorsAdmin: React.FC<SafetyIndicatorsAdminProps> = ({ onBack }) => {
+  const [activeAdminTab, setActiveAdminTab] = useState<'monitoring' | 'customize'>('monitoring');
   const [departments, setDepartments] = useState<Department[]>([]);
   const [indicatorDefs, setIndicatorDefs] = useState<SafetyIndicatorDefinition[]>([]);
   const [records, setRecords] = useState<SafetyIndicatorRecord[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Indicators customization state
+  const [customIndicators, setCustomIndicators] = useState<ClinicalIndicatorItem[]>(CLINICAL_INDICATORS_MATRIX);
+  const [editingItem, setEditingItem] = useState<ClinicalIndicatorItem | null>(null);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [newItem, setNewItem] = useState<ClinicalIndicatorItem>({
+    id: `ind-${Date.now()}`,
+    title: '',
+    unit: 'مورد',
+    category: 'عمومی و اختصاصی بخش',
+    allowedDepts: ['ICU', 'CCU', 'داخلی/جراحی', 'اورژانس', 'زنان و زایمان', 'دیالیز', 'اطفال', 'زایشگاه', 'تالاسمی', 'اتاق عمل'],
+    description: '',
+    targetValue: 0,
+  });
 
   // Filters
   const [selectedDept, setSelectedDept] = useState<string>('all');
@@ -183,6 +203,226 @@ export const SafetyIndicatorsAdmin: React.FC<SafetyIndicatorsAdminProps> = ({ on
         </div>
       </div>
 
+      {/* Sub-Tabs Selector */}
+      <div className="flex items-center gap-3 mb-6 bg-white p-2 rounded-2xl border-2 border-indigo-200 shadow-lg">
+        <button
+          onClick={() => setActiveAdminTab('monitoring')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs transition cursor-pointer ${
+            activeAdminTab === 'monitoring'
+              ? 'bg-indigo-900 text-white shadow-md'
+              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+          }`}
+        >
+          <BarChart3 className="w-4 h-4 text-cyan-400" />
+          <span>پایش و گزارش‌های دریافتی از بخش‌ها</span>
+        </button>
+        <button
+          onClick={() => setActiveAdminTab('customize')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs transition cursor-pointer ${
+            activeAdminTab === 'customize'
+              ? 'bg-indigo-900 text-white shadow-md'
+              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+          }`}
+        >
+          <Settings2 className="w-4 h-4 text-amber-400" />
+          <span>مدیریت و ویرایش سوالات / عناوین شاخص‌های بخش‌ها</span>
+        </button>
+      </div>
+
+      {activeAdminTab === 'customize' ? (
+        <div className="bg-white border-2 border-indigo-200 rounded-3xl p-6 sm:p-8 shadow-2xl text-slate-900 space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b-2 border-slate-200">
+            <div>
+              <h3 className="text-xl font-black text-indigo-950 flex items-center gap-2">
+                <Settings2 className="w-6 h-6 text-amber-500" />
+                تعریف و ویرایش شاخص‌های ایمنی بیمار برای بخش‌ها
+              </h3>
+              <p className="text-xs text-slate-700 font-bold mt-1">
+                شما می‌توانید عناوین شاخص‌ها، واحدهای سنجش، حد مجاز و بخش‌های مرتبط را ویرایش یا اضافه نمایید.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setIsAddingNew(true);
+                setEditingItem(null);
+              }}
+              className="px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center gap-2 shadow-md transition cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>افزودن شاخص جدید</span>
+            </button>
+          </div>
+
+          {/* Add / Edit Form Modal or Inline */}
+          {(isAddingNew || editingItem) && (
+            <div className="p-5 bg-indigo-50/90 rounded-2xl border-2 border-indigo-200 space-y-4">
+              <h4 className="text-sm font-black text-indigo-950">
+                {isAddingNew ? 'افزودن شاخص جدید' : `ویرایش شاخص: ${editingItem?.title}`}
+              </h4>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-bold">
+                <div className="space-y-1">
+                  <label className="text-slate-800">عنوان شاخص:</label>
+                  <input
+                    type="text"
+                    value={isAddingNew ? newItem.title : editingItem?.title || ''}
+                    onChange={(e) =>
+                      isAddingNew
+                        ? setNewItem({ ...newItem, title: e.target.value })
+                        : setEditingItem({ ...editingItem!, title: e.target.value })
+                    }
+                    placeholder="مثلاً: تعداد موارد اشتباه دارویی..."
+                    className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-slate-800">واحد سنجش:</label>
+                  <input
+                    type="text"
+                    value={isAddingNew ? newItem.unit : editingItem?.unit || ''}
+                    onChange={(e) =>
+                      isAddingNew
+                        ? setNewItem({ ...newItem, unit: e.target.value })
+                        : setEditingItem({ ...editingItem!, unit: e.target.value })
+                    }
+                    placeholder="مورد / درصد / نفر..."
+                    className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-slate-800">دسته‌بندی شاخص:</label>
+                  <input
+                    type="text"
+                    value={isAddingNew ? newItem.category : editingItem?.category || ''}
+                    onChange={(e) =>
+                      isAddingNew
+                        ? setNewItem({ ...newItem, category: e.target.value })
+                        : setEditingItem({ ...editingItem!, category: e.target.value })
+                    }
+                    placeholder="دارویی / سقوط / عفونت / عمومی..."
+                    className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-slate-800">مقدار تارگت / استاندارد:</label>
+                  <input
+                    type="number"
+                    value={isAddingNew ? newItem.targetValue : editingItem?.targetValue || 0}
+                    onChange={(e) =>
+                      isAddingNew
+                        ? setNewItem({ ...newItem, targetValue: Number(e.target.value) })
+                        : setEditingItem({ ...editingItem!, targetValue: Number(e.target.value) })
+                    }
+                    className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1 text-xs font-bold">
+                <label className="text-slate-800">شرح و نحوه محاسبه شاخص:</label>
+                <textarea
+                  rows={2}
+                  value={isAddingNew ? newItem.description : editingItem?.description || ''}
+                  onChange={(e) =>
+                    isAddingNew
+                      ? setNewItem({ ...newItem, description: e.target.value })
+                      : setEditingItem({ ...editingItem!, description: e.target.value })
+                  }
+                  placeholder="توضیحات کوتاه یا فرمول محاسبه شاخص..."
+                  className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingNew(false);
+                    setEditingItem(null);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-slate-200 text-slate-800 text-xs font-black hover:bg-slate-300 transition cursor-pointer"
+                >
+                  انصراف
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const itemToSave = isAddingNew ? newItem : editingItem;
+                    if (!itemToSave || !itemToSave.title.trim()) {
+                      alert('عنوان شاخص الزامی است.');
+                      return;
+                    }
+                    await DataAccessLayer.saveIndicatorDefinition({
+                      id: itemToSave.id,
+                      title: itemToSave.title,
+                      unit: itemToSave.unit,
+                      targetValue: itemToSave.targetValue || 0,
+                      description: itemToSave.description,
+                    });
+                    if (isAddingNew) {
+                      setCustomIndicators((prev) => [...prev, newItem]);
+                    } else if (editingItem) {
+                      setCustomIndicators((prev) =>
+                        prev.map((i) => (i.id === editingItem.id ? editingItem : i))
+                      );
+                    }
+                    setIsAddingNew(false);
+                    setEditingItem(null);
+                    alert('شاخص با موفقیت ثبت و به روزرسانی شد.');
+                  }}
+                  className="px-6 py-2 rounded-xl bg-indigo-900 text-white text-xs font-black hover:bg-indigo-950 transition cursor-pointer shadow-md flex items-center gap-1.5"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>ذخیره تغییرات</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Indicators List Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-right text-xs">
+              <thead>
+                <tr className="bg-indigo-950 text-white font-black">
+                  <th className="p-3">عنوان شاخص</th>
+                  <th className="p-3">دسته‌بندی</th>
+                  <th className="p-3 text-center">واحد</th>
+                  <th className="p-3 text-center">هدف (Target)</th>
+                  <th className="p-3">شرح</th>
+                  <th className="p-3 text-center">عملیات</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 font-extrabold text-slate-800">
+                {customIndicators.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50 transition">
+                    <td className="p-3 font-black text-indigo-950">{item.title}</td>
+                    <td className="p-3 text-slate-700">{item.category}</td>
+                    <td className="p-3 text-center">{item.unit}</td>
+                    <td className="p-3 text-center text-emerald-700">{toPersianDigits(item.targetValue ?? 0)}</td>
+                    <td className="p-3 text-slate-600 max-w-xs truncate">{item.description || '---'}</td>
+                    <td className="p-3 text-center">
+                      <button
+                        onClick={() => {
+                          setEditingItem(item);
+                          setIsAddingNew(false);
+                        }}
+                        className="px-3 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 font-black text-xs hover:bg-indigo-100 transition cursor-pointer flex items-center gap-1 mx-auto"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                        <span>ویرایش</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <>
       {/* KPI Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-[#0c2a4a] border border-cyan-400/30 rounded-3xl p-5 shadow-xl text-white flex items-center justify-between">
@@ -437,6 +677,8 @@ export const SafetyIndicatorsAdmin: React.FC<SafetyIndicatorsAdminProps> = ({ on
           </div>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 };

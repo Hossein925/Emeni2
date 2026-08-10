@@ -1,10 +1,10 @@
 import React from 'react';
-import { BookOpenCheck, CheckCircle2, FileText, AlertTriangle, GraduationCap } from 'lucide-react';
+import { BookOpenCheck, Bell, AlertTriangle, GraduationCap } from 'lucide-react';
 import { TickerBanner } from './TickerBanner';
 import { User } from '../types';
 
 interface HomeMetroGridProps {
-  onSelectTile: (tileId: 'education' | 'resolutions' | 'scenarios' | 'error_report' | 'quizzes') => void;
+  onSelectTile: (tileId: 'education' | 'announcements' | 'resolutions' | 'scenarios' | 'error_report' | 'quizzes') => void;
   currentUser?: User | null;
   onEditTicker?: () => void;
 }
@@ -19,9 +19,9 @@ export const HomeMetroGrid: React.FC<HomeMetroGridProps> = ({
       {/* Moving Ticker Banner */}
       <TickerBanner currentUser={currentUser} onEditTicker={onEditTicker} />
 
-      {/* Metro Tiles Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
-        {/* Tile 1: آموزش ایمنی بیمار */}
+      {/* Main Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-5xl mx-auto">
+        {/* Item 1: آموزش ایمنی بیمار */}
         <button
           onClick={() => onSelectTile('education')}
           className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-5 sm:p-7 text-white shadow-2xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-square hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
@@ -44,7 +44,7 @@ export const HomeMetroGrid: React.FC<HomeMetroGridProps> = ({
           </div>
         </button>
 
-        {/* Tile 2: آزمون‌های ایمنی بیمار */}
+        {/* Item 2: آزمون‌های ایمنی بیمار */}
         <button
           onClick={() => onSelectTile('quizzes')}
           className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-950 via-blue-900 to-slate-900 p-5 sm:p-7 text-white shadow-2xl border-2 border-cyan-400/50 hover:border-amber-400/80 flex flex-col justify-between aspect-square hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right ring-2 ring-cyan-400/20"
@@ -64,47 +64,27 @@ export const HomeMetroGrid: React.FC<HomeMetroGridProps> = ({
           </div>
         </button>
 
-        {/* Tile 3: مصوبات جلسات */}
+        {/* Item 3: اعلان‌های ایمنی (Merged Item for Resolutions & Scenarios) */}
         <button
-          onClick={() => onSelectTile('resolutions')}
-          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-5 sm:p-7 text-white shadow-2xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-square hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
+          onClick={() => onSelectTile('announcements')}
+          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-5 sm:p-7 text-white shadow-2xl border-2 border-amber-400/50 hover:border-amber-300 flex flex-col justify-between aspect-square hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right ring-2 ring-amber-400/20"
         >
-          <div className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/20 rounded-full blur-2xl group-hover:bg-amber-500/30 transition-all"></div>
 
           <div className="flex justify-start">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-emerald-300 group-hover:scale-110 group-hover:bg-emerald-500/20 shadow-lg transition-all duration-300">
-              <CheckCircle2 className="w-6 h-6 sm:w-9 sm:h-9 text-emerald-300" />
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 border border-amber-200/40 flex items-center justify-center text-amber-300 group-hover:scale-110 group-hover:bg-amber-500/20 shadow-lg transition-all duration-300">
+              <Bell className="w-6 h-6 sm:w-9 sm:h-9 text-amber-300 animate-pulse" />
             </div>
           </div>
 
           <div className="z-10 mt-auto">
             <h3 className="text-base sm:text-xl font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
-              مصوبات جلسات
+              اعلان‌های ایمنی
             </h3>
           </div>
         </button>
 
-        {/* Tile 4: سناریوهای ایمنی */}
-        <button
-          onClick={() => onSelectTile('scenarios')}
-          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-5 sm:p-7 text-white shadow-2xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-square hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
-        >
-          <div className="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all"></div>
-
-          <div className="flex justify-start">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-amber-300 group-hover:scale-110 group-hover:bg-amber-500/20 shadow-lg transition-all duration-300">
-              <FileText className="w-6 h-6 sm:w-9 sm:h-9 text-amber-300" />
-            </div>
-          </div>
-
-          <div className="z-10 mt-auto">
-            <h3 className="text-base sm:text-xl font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
-              سناریوهای ایمنی
-            </h3>
-          </div>
-        </button>
-
-        {/* Tile 5: ثبت گزارش خطا */}
+        {/* Item 4: ثبت گزارش خطا */}
         <button
           onClick={() => onSelectTile('error_report')}
           className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-5 sm:p-7 text-white shadow-2xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-square hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"

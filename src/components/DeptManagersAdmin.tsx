@@ -258,7 +258,8 @@ export const DeptManagersAdmin: React.FC<DeptManagersAdminProps> = ({ onBack, on
                         onClick={() => {
                           const managerUser: User = {
                             id: `user-${dept.id}`,
-                            username: dept.managerCode,
+                            userCode: dept.managerCode,
+                            passwordHash: '',
                             name: dept.managerName,
                             role: 'department_manager',
                             departmentId: dept.id,

@@ -8,6 +8,7 @@ import { AboutModal } from './components/AboutModal';
 // Public Views
 import { HomeMetroGrid } from './components/HomeMetroGrid';
 import { PublicEducationView } from './components/PublicEducationView';
+import { PublicSafetyAnnouncementsView } from './components/PublicSafetyAnnouncementsView';
 import { PublicResolutionsView } from './components/PublicResolutionsView';
 import { PublicScenariosView } from './components/PublicScenariosView';
 import { PublicErrorReportView } from './components/PublicErrorReportView';
@@ -28,9 +29,12 @@ import { EducationAdmin } from './components/EducationAdmin';
 import { SafetyVisitsAdmin } from './components/SafetyVisitsAdmin';
 import { TickerAdmin } from './components/TickerAdmin';
 
+import { scrollToTopAndResetZoom } from './utils/scrollUtils';
+
 export type CurrentView =
   | 'home'
   | 'public_education'
+  | 'public_safety_announcements'
   | 'public_resolutions'
   | 'public_scenarios'
   | 'public_error_report'
@@ -115,24 +119,7 @@ export default function App() {
 
   // Scroll to top automatically & reset zoom state when switching views
   useEffect(() => {
-    // 1. Scroll to absolute top
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-
-    // 2. Reset zoom
-    if (document.body) {
-      document.body.style.zoom = '100%';
-    }
-
-    // Force viewport reset to reset gesture/pinch zoom
-    const metaViewport = document.querySelector('meta[name="viewport"]');
-    if (metaViewport) {
-      metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-      setTimeout(() => {
-        metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
-      }, 100);
-    }
+    scrollToTopAndResetZoom();
   }, [currentView]);
 
   const handleLoginSuccess = (user: User) => {
@@ -192,6 +179,7 @@ export default function App() {
             currentUser={currentUser}
             onSelectTile={(tile) => {
               if (tile === 'education') setCurrentView('public_education');
+              if (tile === 'announcements') setCurrentView('public_safety_announcements');
               if (tile === 'resolutions') setCurrentView('public_resolutions');
               if (tile === 'scenarios') setCurrentView('public_scenarios');
               if (tile === 'error_report') setCurrentView('public_error_report');
@@ -211,11 +199,20 @@ export default function App() {
         {currentView === 'public_education' && (
           <PublicEducationView onBack={() => setCurrentView('home')} />
         )}
+        {currentView === 'public_safety_announcements' && (
+          <PublicSafetyAnnouncementsView
+            onBack={() => setCurrentView('home')}
+            onSelectOption={(option) => {
+              if (option === 'resolutions') setCurrentView('public_resolutions');
+              if (option === 'scenarios') setCurrentView('public_scenarios');
+            }}
+          />
+        )}
         {currentView === 'public_resolutions' && (
-          <PublicResolutionsView onBack={() => setCurrentView('home')} />
+          <PublicResolutionsView onBack={() => setCurrentView('public_safety_announcements')} />
         )}
         {currentView === 'public_scenarios' && (
-          <PublicScenariosView onBack={() => setCurrentView('home')} />
+          <PublicScenariosView onBack={() => setCurrentView('public_safety_announcements')} />
         )}
         {currentView === 'public_error_report' && (
           <PublicErrorReportView onBack={() => setCurrentView('home')} />

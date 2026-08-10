@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Checklist, ChecklistField } from '../types';
 import { DataAccessLayer } from '../services/dal';
+import { ErrorReportFormBuilder } from './ErrorReportFormBuilder';
 
 interface ChecklistsAdminProps {
   onBack: () => void;
@@ -235,7 +236,11 @@ export const ChecklistsAdmin: React.FC<ChecklistsAdminProps> = ({ onBack }) => {
         </div>
       )}
 
-      {selectedTile && (
+      {selectedTile === 'error_report' && (
+        <ErrorReportFormBuilder onSaved={loadChecklists} />
+      )}
+
+      {selectedTile && selectedTile !== 'error_report' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Form Builder Panel */}
         <div className="lg:col-span-2 bg-white border-2 border-indigo-200 rounded-3xl p-6 shadow-xl space-y-6 text-slate-900">

@@ -126,8 +126,8 @@ export const DeptStaffEvaluationView: React.FC<DeptStaffEvaluationViewProps> = (
   const selectedChecklist = evalChecklists.find((c) => c.id === selectedChecklistId);
   const totalFields = selectedChecklist?.fields?.length || 0;
   const maxScore = totalFields > 0 ? totalFields * 2 : 100;
-  const currentScore = totalFields > 0
-    ? Object.values(checklistAnswers).reduce((a, b) => a + Number(b || 0), 0)
+  const currentScore: number = totalFields > 0
+    ? Object.values(checklistAnswers).reduce<number>((a, b) => a + Number(b || 0), 0)
     : 100;
   const percentage = maxScore > 0 ? Math.round((currentScore / maxScore) * 100) : 100;
 
@@ -541,8 +541,11 @@ export const DeptStaffEvaluationView: React.FC<DeptStaffEvaluationViewProps> = (
                     <td className="p-3 text-center">
                       <button
                         onClick={() => {
+                          const nameParts = (item.staffName || '').trim().split(' ');
                           const staffObj: StaffMember = {
                             id: `stf-${item.nationalId}`,
+                            firstName: nameParts[0] || '',
+                            lastName: nameParts.slice(1).join(' ') || '',
                             fullName: item.staffName,
                             nationalId: item.nationalId,
                             departmentId: item.departmentId,

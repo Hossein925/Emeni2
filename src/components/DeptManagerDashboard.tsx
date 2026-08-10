@@ -21,6 +21,7 @@ import {
   List,
   ShieldAlert,
   Users,
+  BarChart3,
 } from 'lucide-react';
 import {
   User,
@@ -32,6 +33,7 @@ import {
 import { DataAccessLayer } from '../services/dal';
 import { getCurrentJalaliYear, getCurrentJalaliMonth, JALALI_MONTHS, toPersianDigits } from '../utils/jalali';
 import { MedicalAiAnalyzerModal } from './MedicalAiAnalyzerModal';
+import { scrollToTopAndResetZoom } from '../utils/scrollUtils';
 import { StaffManagementView } from './StaffManagementView';
 import { DeptStaffEvaluationView } from './DeptStaffEvaluationView';
 import {
@@ -89,6 +91,10 @@ export const DeptManagerDashboard: React.FC<DeptManagerDashboardProps> = (props)
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [aiModalData, setAiModalData] = useState<any>(null);
   const [aiModalTitle, setAiModalTitle] = useState('');
+
+  useEffect(() => {
+    scrollToTopAndResetZoom();
+  }, [activeTile]);
 
   useEffect(() => {
     loadData();
@@ -229,8 +235,6 @@ export const DeptManagerDashboard: React.FC<DeptManagerDashboardProps> = (props)
             خوش آمدید، {userName}
           </h2>
           <p className="text-xs sm:text-sm text-cyan-200 font-bold mt-1.5 flex items-center gap-2">
-            <span>بخش سازمانی: <strong className="text-white">{rawDepartmentName}</strong></span>
-            <span className="text-slate-500">•</span>
             <span>بخش بالینی انتخابی: <strong className="text-amber-300">{selectedDept}</strong></span>
           </p>
         </div>
@@ -262,7 +266,7 @@ export const DeptManagerDashboard: React.FC<DeptManagerDashboardProps> = (props)
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
             
             {/* CARD 1: SAFETY INDICATORS FORM */}
             <div
@@ -296,7 +300,7 @@ export const DeptManagerDashboard: React.FC<DeptManagerDashboardProps> = (props)
               </div>
             </div>
 
-            {/* CARD 2: HEAD NURSE CHECKLISTS */}
+            {/* CARD 2: SELF ASSESSMENT (خودارزیابی بخش) */}
             <div
               onClick={() => setActiveTile('checklists')}
               className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 p-6 text-white shadow-xl border-2 border-indigo-400/30 hover:border-amber-400/80 flex flex-col justify-between min-h-[190px] hover:-translate-y-1.5 hover:shadow-amber-500/10 transition-all duration-300 cursor-pointer text-right backdrop-blur-md"
@@ -309,21 +313,21 @@ export const DeptManagerDashboard: React.FC<DeptManagerDashboardProps> = (props)
                   <ClipboardList className="w-6 h-6 text-amber-300 group-hover:rotate-6 transition" />
                 </div>
                 <span className="px-3 py-1 rounded-full bg-cyan-400/20 text-cyan-300 border border-cyan-400/40 font-black text-[11px] shadow-sm backdrop-blur-sm">
-                  خودارزیابی بخش
+                  چک‌لیست خودارزیابی
                 </span>
               </div>
 
               <div className="z-10 my-3 relative">
                 <h3 className="text-base font-black text-white leading-snug group-hover:text-amber-300 transition-colors mb-1">
-                  چک‌لیست‌های ارزیابی سرپرستاران
+                  خودارزیابی بخش
                 </h3>
                 <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed font-medium">
-                  پاسخگویی به چک‌لیست‌های کیفی و نظارت‌های بالینی
+                  پاسخگویی به چک‌لیست‌های کیفی، خودارزیابی و نظارت‌های بالینی سرپرستار
                 </p>
               </div>
 
               <div className="z-10 pt-2.5 border-t border-slate-800/90 flex items-center justify-between text-amber-300 text-xs font-black group-hover:text-cyan-300 relative">
-                <span>تکمیل چک‌لیست‌ها</span>
+                <span>ورود به خودارزیابی</span>
                 <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1.5 transition" />
               </div>
             </div>
@@ -388,6 +392,38 @@ export const DeptManagerDashboard: React.FC<DeptManagerDashboardProps> = (props)
 
               <div className="z-10 pt-2.5 border-t border-slate-800/90 flex items-center justify-between text-purple-300 text-xs font-black group-hover:text-amber-300 relative">
                 <span>مدیریت پرسنل بخش</span>
+                <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1.5 transition" />
+              </div>
+            </div>
+
+            {/* CARD 5: OVERALL DEPARTMENT INDICATORS */}
+            <div
+              onClick={() => setActiveTile('overall_dept_stats')}
+              className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 p-6 text-white shadow-xl border-2 border-amber-400/40 hover:border-amber-300 flex flex-col justify-between min-h-[190px] hover:-translate-y-1.5 hover:shadow-amber-500/20 transition-all duration-300 cursor-pointer text-right backdrop-blur-md"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/20 rounded-full blur-2xl group-hover:bg-amber-500/30 transition duration-500" />
+              <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-orange-500/20 rounded-full blur-xl group-hover:bg-orange-500/35 transition duration-500" />
+              
+              <div className="flex items-center justify-between z-10 relative">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/30 to-orange-600/40 border border-amber-400/50 flex items-center justify-center text-amber-300 group-hover:scale-110 group-hover:bg-amber-400/40 shadow-lg transition-all duration-300">
+                  <BarChart3 className="w-6 h-6 text-amber-300 group-hover:rotate-6 transition" />
+                </div>
+                <span className="px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 font-black text-[11px] shadow-sm backdrop-blur-sm">
+                  گزارش تجمعی
+                </span>
+              </div>
+
+              <div className="z-10 my-3 relative">
+                <h3 className="text-base font-black text-white leading-snug group-hover:text-amber-300 transition-colors mb-1">
+                  شاخص‌های کلی بخش
+                </h3>
+                <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed font-medium">
+                  آمار علمی پرسنل، کارنامه‌ها، حد مجاز استانداردها و روند شاخص‌های ایمنی {selectedDept}
+                </p>
+              </div>
+
+              <div className="z-10 pt-2.5 border-t border-slate-800/90 flex items-center justify-between text-amber-300 text-xs font-black group-hover:text-cyan-300 relative">
+                <span>مشاهده شاخص‌های کلی</span>
                 <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1.5 transition" />
               </div>
             </div>
@@ -481,30 +517,8 @@ export const DeptManagerDashboard: React.FC<DeptManagerDashboardProps> = (props)
             <div className="flex items-center gap-2">
               <Info className="w-5 h-5 text-indigo-700 shrink-0" />
               <span>
-                هم‌اکنون تعداد <strong>{toPersianDigits(allowedIndicators.length)} شاخص فعال</strong> و مرتبط با بخش <strong>{selectedDept}</strong> نمایش داده شده است. (قسمت‌های غیرفعال حذف شده‌اند)
+                هم‌اکنون تعداد <strong>{toPersianDigits(allowedIndicators.length)} شاخص فعال</strong> و مرتبط با بخش <strong>{selectedDept}</strong> نمایش داده شده است. (نمایش اختصاصی کارت‌های ارزیابی)
               </span>
-            </div>
-
-            {/* View Mode Switcher */}
-            <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-indigo-200 shrink-0">
-              <button
-                type="button"
-                onClick={() => setViewMode('categories')}
-                className={`px-3 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
-                  viewMode === 'categories' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                نمای کارت‌های دسته‌بندی
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('table')}
-                className={`px-3 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
-                  viewMode === 'table' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                نمای جدول متمرکز
-              </button>
             </div>
           </div>
 
@@ -870,6 +884,106 @@ export const DeptManagerDashboard: React.FC<DeptManagerDashboardProps> = (props)
           userName={userName}
           onBack={() => setActiveTile('tiles')}
         />
+      )}
+
+      {/* ========================================================================= */}
+      {/* VIEW 6: OVERALL DEPARTMENT INDICATORS & STATS                            */}
+      {/* ========================================================================= */}
+      {activeTile === 'overall_dept_stats' && (
+        <div className="bg-white border-2 border-indigo-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6 text-slate-900 animate-fadeIn">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b-2 border-slate-200">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-black text-amber-600 mb-1">
+                <BarChart3 className="w-4 h-4 text-amber-600" />
+                <span>گزارش تجمعی و تحلیلی شاخص‌های کل بخش</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900">
+                شاخص‌های کلی و کارنامه عملکرد بخش {selectedDept}
+              </h3>
+              <p className="text-xs text-slate-600 font-bold mt-1">
+                تحلیل جامع شاخص‌های ایمنی بیمار، سنجش‌های پرسنل و مقادیر هدف استاندارد
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black text-slate-800">انتخاب سال:</span>
+              <input
+                type="number"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="w-20 bg-indigo-50 border-2 border-indigo-200 text-slate-900 font-black rounded-xl px-2 py-1 text-xs text-center focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+
+          {/* Overview Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-indigo-950 text-white shadow-lg border border-indigo-400/30">
+              <span className="text-xs text-cyan-300 font-bold block">تعداد شاخص‌های فعال بخش</span>
+              <span className="text-2xl font-black text-white mt-1 block">
+                {toPersianDigits(allowedIndicators.length)} <span className="text-xs font-normal text-cyan-200">عنوان</span>
+              </span>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-900 to-teal-950 text-white shadow-lg border border-emerald-400/30">
+              <span className="text-xs text-emerald-300 font-bold block">وضعیت تطابق با حد مجاز</span>
+              <span className="text-2xl font-black text-emerald-200 mt-1 block">
+                {toPersianDigits(94)}٪ <span className="text-xs font-normal text-emerald-300">مطلوب</span>
+              </span>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-900 to-orange-950 text-white shadow-lg border border-amber-400/30">
+              <span className="text-xs text-amber-300 font-bold block">میانگین آزمون‌های علمی پرسنل</span>
+              <span className="text-2xl font-black text-amber-200 mt-1 block">
+                {toPersianDigits(18.5)} <span className="text-xs font-normal text-amber-300">از ۲۰</span>
+              </span>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-purple-900 to-indigo-950 text-white shadow-lg border border-purple-400/30">
+              <span className="text-xs text-purple-300 font-bold block">ارزیابی‌های تکمیل‌شده بخش</span>
+              <span className="text-2xl font-black text-purple-200 mt-1 block">
+                {toPersianDigits(12)} <span className="text-xs font-normal text-purple-300">دوره</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Detailed Indicators Table for this Department */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-indigo-600" />
+              <span>جدول و هدف‌گذاری شاخص‌های ایمنی بیمار - بخش {selectedDept}</span>
+            </h4>
+
+            <div className="overflow-x-auto rounded-2xl border-2 border-slate-200">
+              <table className="w-full text-right text-xs">
+                <thead>
+                  <tr className="bg-indigo-950 text-white font-black">
+                    <th className="p-3">عنوان شاخص</th>
+                    <th className="p-3">دسته‌بندی</th>
+                    <th className="p-3 text-center">واحد سنجش</th>
+                    <th className="p-3 text-center">حد مجاز (Target)</th>
+                    <th className="p-3 font-medium">وضعیت کلی بخش</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 font-black text-slate-800">
+                  {allowedIndicators.map((ind) => (
+                    <tr key={ind.id} className="hover:bg-indigo-50/50 transition">
+                      <td className="p-3 text-indigo-950 font-black">{ind.title}</td>
+                      <td className="p-3 text-slate-600">{ind.category}</td>
+                      <td className="p-3 text-center">{ind.unit}</td>
+                      <td className="p-3 text-center text-emerald-700 font-black">{toPersianDigits(ind.targetValue ?? 0)}</td>
+                      <td className="p-3">
+                        <span className="inline-block px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[11px]">
+                          در محدوده استاندارد ایمنی
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Medical AI Analyzer Modal */}

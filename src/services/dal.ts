@@ -531,9 +531,13 @@ function saveData<T>(key: string, data: T): void {
     // Async sync with Supabase if configured
     if (isSupabaseConfigured && supabase) {
       const tableName = key.replace('ps_', '').replace('_v1', '').replace('_v2', '');
-      supabase.from(tableName).upsert({ id: key, payload: data }).catch((err) => {
-        console.warn('Supabase sync error:', err);
-      });
+      (async () => {
+        try {
+          await supabase.from(tableName).upsert({ id: key, payload: data });
+        } catch (err) {
+          console.warn('Supabase sync error:', err);
+        }
+      })();
     }
   } catch (e) {
     console.error(`Error saving key ${key} to storage:`, e);
@@ -838,12 +842,28 @@ export const DataAccessLayer = {
     return reports;
   },
 
-  async saveErrorReport(report: Omit<ErrorReport, 'id' | 'createdAt' | 'status'>): Promise<ErrorReport> {
+  async saveErrorReport(report: Partial<ErrorReport> & { id?: string }): Promise<ErrorReport> {
     const list = loadData<ErrorReport[]>(STORAGE_KEYS.ERROR_REPORTS, INITIAL_ERROR_REPORTS);
+    if (report.id) {
+      const idx = list.findIndex((r) => r.id === report.id);
+      if (idx !== -1) {
+        list[idx] = { ...list[idx], ...report } as ErrorReport;
+        saveData(STORAGE_KEYS.ERROR_REPORTS, list);
+        return list[idx];
+      }
+    }
     const newReport: ErrorReport = {
+      reporterName: report.reporterName || 'ناشناس',
+      departmentId: report.departmentId || '',
+      departmentName: report.departmentName || '',
+      reportDate: report.reportDate || new Date().toLocaleDateString('fa-IR'),
+      answers: report.answers || {},
+      status: report.status || 'received',
+      resolution: report.resolution || '',
+      correctiveAction: report.correctiveAction || '',
+      isPublic: report.isPublic || false,
       ...report,
-      id: `err-${Date.now()}`,
-      status: 'received',
+      id: report.id || `err-${Date.now()}`,
       createdAt: new Date().toLocaleDateString('fa-IR'),
     };
     list.push(newReport);
@@ -965,11 +985,27 @@ export const DataAccessLayer = {
     return visits;
   },
 
-  async saveSafetyVisit(visit: Omit<SafetyVisit, 'id' | 'createdAt'>): Promise<SafetyVisit> {
+  async saveSafetyVisit(visit: Partial<SafetyVisit> & { id?: string }): Promise<SafetyVisit> {
     const list = loadData<SafetyVisit[]>(STORAGE_KEYS.VISITS, INITIAL_SAFETY_VISITS);
+    if (visit.id) {
+      const idx = list.findIndex((v) => v.id === visit.id);
+      if (idx !== -1) {
+        list[idx] = { ...list[idx], ...visit } as SafetyVisit;
+        saveData(STORAGE_KEYS.VISITS, list);
+        return list[idx];
+      }
+    }
     const newVisit: SafetyVisit = {
+      departmentId: visit.departmentId || '',
+      departmentName: visit.departmentName || '',
+      visitDate: visit.visitDate || new Date().toLocaleDateString('fa-IR'),
+      teamMembers: visit.teamMembers || [],
+      observations: visit.observations || '',
+      resolutions: visit.resolutions || '',
+      followUpPerson: visit.followUpPerson || '',
+      isPublic: visit.isPublic || false,
       ...visit,
-      id: `vis-${Date.now()}`,
+      id: visit.id || `vis-${Date.now()}`,
       createdAt: new Date().toLocaleDateString('fa-IR'),
     };
     list.push(newVisit);

@@ -76,26 +76,18 @@ export const StaffPersonnelReportCardModal: React.FC<StaffPersonnelReportCardMod
 
   const handleExportDocx = () => {
     downloadStaffSafetyReportCardDocx(
-      {
-        id: staff.id,
-        staffName: staff.fullName,
-        nationalId: staff.nationalId,
-        departmentId: staff.departmentId,
-        departmentName: staff.departmentName,
-        checklistId: 'all',
-        checklistTitle: 'کارنامه جامع پرسنلی',
-        totalScore: avgEvalScore,
-        maxScore: 100,
-        percentage: avgEvalScore,
-        year: 1403,
-        month: 1,
-        monthName: 'جامع',
-        correctiveAction: 'ثبت در کارنامه عملکردی پرسنل',
-        createdAt: new Date().toLocaleDateString('fa-IR'),
-        evaluatedBy: 'سرپرستار / مسئول بخش',
-        answers: {},
-      },
-      submissions
+      staff.fullName,
+      staff.nationalId,
+      staff.departmentName,
+      evaluations.map((ev) => ({
+        checklistTitle: ev.checklistTitle,
+        monthName: ev.monthName,
+        percentage: ev.percentage,
+        totalScore: ev.totalScore,
+        maxScore: ev.maxScore,
+        correctiveAction: ev.correctiveAction || '---',
+        createdAt: ev.createdAt,
+      }))
     );
   };
 

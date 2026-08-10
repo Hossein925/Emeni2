@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, AlertTriangle, Send, CheckCircle2, ShieldCheck, Smile, Frown, Meh } from 'lucide-react';
+import { ArrowRight, AlertTriangle, Send, CheckCircle2, ShieldCheck, Smile, Frown, Meh, CheckSquare, Calendar } from 'lucide-react';
 import { Department, Checklist, ChecklistField } from '../types';
 import { DataAccessLayer } from '../services/dal';
 
@@ -48,6 +48,19 @@ export const PublicErrorReportView: React.FC<PublicErrorReportViewProps> = ({ on
       return;
     }
 
+    // Validate required fields if errorChecklist exists
+    if (errorChecklist && errorChecklist.fields) {
+      for (const field of errorChecklist.fields) {
+        if (field.required) {
+          const ans = formAnswers[field.id];
+          if (ans === undefined || ans === '' || (Array.isArray(ans) && ans.length === 0)) {
+            setErrorMsg(`پاسخ به سوال «${field.label}» اجباری است.`);
+            return;
+          }
+        }
+      }
+    }
+
     setSubmitting(true);
     try {
       const selectedDept = departments.find((d) => d.id === selectedDeptId);
@@ -67,6 +80,19 @@ export const PublicErrorReportView: React.FC<PublicErrorReportViewProps> = ({ on
     }
   };
 
+  // Group fields by section if errorChecklist exists
+  const groupedSections = errorChecklist?.fields
+    ? errorChecklist.fields.reduce<Record<string, { field: ChecklistField; originalIndex: number }[]>>(
+        (acc, field, idx) => {
+          const sec = field.section || 'اطلاعات عمومی گزارش خطا';
+          if (!acc[sec]) acc[sec] = [];
+          acc[sec].push({ field, originalIndex: idx });
+          return acc;
+        },
+        {}
+      )
+    : {};
+
   return (
     <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn text-right">
       {/* Header */}
@@ -74,10 +100,10 @@ export const PublicErrorReportView: React.FC<PublicErrorReportViewProps> = ({ on
         <div>
           <h2 className="text-2xl sm:text-3xl font-black text-indigo-950 flex items-center gap-2">
             <AlertTriangle className="w-7 h-7 text-rose-600" />
-            ثبت گزارش خطای پزشکی و ایمنی
+            {errorChecklist?.title || 'ثبت گزارش خطای پزشکی و ایمنی'}
           </h2>
           <p className="text-xs sm:text-sm text-indigo-900/80 font-medium mt-1">
-            ارسال محرمانه و بدون تنبیه خطاهای درمانی، دارویی و تجهیزاتی جهت ارتقاء ایمنی بیمارستان
+            {errorChecklist?.description || 'ارسال محرمانه و بدون تنبیه خطاهای درمانی، دارویی و تجهیزاتی جهت ارتقاء ایمنی بیمارستان'}
           </p>
         </div>
         <button
@@ -120,16 +146,18 @@ export const PublicErrorReportView: React.FC<PublicErrorReportViewProps> = ({ on
       ) : (
         <form onSubmit={handleSubmit} className="bg-white border-2 border-indigo-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6 text-slate-900">
           {/* Non-punitive Assurance Notice */}
-          <div className="p-4 rounded-2xl bg-rose-50 border-2 border-rose-200 flex items-start gap-3">
-            <ShieldCheck className="w-6 h-6 text-rose-600 shrink-0 mt-0.5" />
-            <div className="text-xs text-rose-950 leading-relaxed font-semibold">
-              <strong className="block text-sm font-black text-rose-900 mb-0.5">اصول ایمنی: سیستم ثبت گزارش غیرتنبیهی (Non-Punitive)</strong>
-              هدف از این گزارش، ریشه‌یابی سیستماتیک خطاها و جلوگیری از تکرار مجدد آن است. اختیاری بودن درج نام گزارش‌دهنده کاملاً محرمانه باقی می‌ماند.
+          {errorChecklist?.showNonPunitiveNotice !== false && (
+            <div className="p-4 rounded-2xl bg-rose-50 border-2 border-rose-200 flex items-start gap-3">
+              <ShieldCheck className="w-6 h-6 text-rose-600 shrink-0 mt-0.5" />
+              <div className="text-xs text-rose-950 leading-relaxed font-semibold">
+                <strong className="block text-sm font-black text-rose-900 mb-0.5">اصول ایمنی: سیستم ثبت گزارش غیرتنبیهی (Non-Punitive)</strong>
+                {errorChecklist?.nonPunitiveNoticeText || 'هدف از این گزارش، ریشه‌یابی سیستماتیک خطاها و جلوگیری از تکرار مجدد آن است. اختیاری بودن درج نام گزارش‌دهنده کاملاً محرمانه باقی می‌ماند.'}
+              </div>
             </div>
-          </div>
+          )}
 
           {errorMsg && (
-            <div className="p-3 rounded-2xl bg-rose-100 border border-rose-300 text-rose-900 text-xs font-black">
+            <div className="p-3.5 rounded-2xl bg-rose-100 border-2 border-rose-300 text-rose-950 text-xs font-black">
               {errorMsg}
             </div>
           )}
@@ -142,7 +170,7 @@ export const PublicErrorReportView: React.FC<PublicErrorReportViewProps> = ({ on
               </label>
               <input
                 type="text"
-                placeholder="در صورت تمایل وارد کنید یا خالی بگذارید"
+                placeholder="در صورت تمایل وارد کنید یا خالی بگذارید..."
                 value={reporterName}
                 onChange={(e) => setReporterName(e.target.value)}
                 className="w-full px-4 py-2.5 bg-white border-2 border-slate-300 rounded-2xl text-slate-900 placeholder-slate-400 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
@@ -171,107 +199,165 @@ export const PublicErrorReportView: React.FC<PublicErrorReportViewProps> = ({ on
           {/* Dynamic Questions from Error Report Checklist */}
           {errorChecklist && errorChecklist.fields.length > 0 ? (
             <div className="space-y-6 pt-4 border-t-2 border-slate-200">
-              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                <span>سوالات ارزیابی گزارش خطا ({errorChecklist.title})</span>
-              </h3>
+              {(Object.entries(groupedSections) as [string, { field: ChecklistField; originalIndex: number }[]][]).map(([secName, items]) => (
+                <div key={secName} className="space-y-4">
+                  <h3 className="text-xs sm:text-sm font-black text-indigo-950 bg-sky-50 px-3.5 py-2 rounded-xl border border-sky-200 inline-block">
+                    {secName}
+                  </h3>
 
-              {errorChecklist.fields.map((field, idx) => (
-                <div key={field.id} className="p-5 bg-sky-50/80 rounded-2xl border-2 border-sky-200 space-y-3">
-                  <label className="block text-xs sm:text-sm font-black text-slate-900">
-                    {idx + 1}. {field.label} {field.required && <span className="text-rose-600">*</span>}
-                  </label>
+                  <div className="space-y-4">
+                    {items.map(({ field, originalIndex: idx }) => (
+                      <div key={field.id} className="p-5 bg-sky-50/80 rounded-2xl border-2 border-sky-200 space-y-3">
+                        <label className="block text-xs sm:text-sm font-black text-slate-900">
+                          {idx + 1}. {field.label} {field.required && <span className="text-rose-600">*</span>}
+                        </label>
 
-                  {/* Field Types */}
-                  {field.type === 'mc' && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {(field.options || ['دارویی', 'سقوط', 'شناسایی بیمار']).map((opt) => (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => handleAnswerChange(field.id, opt)}
-                          className={`p-2.5 rounded-xl border-2 text-xs font-black transition cursor-pointer ${
-                            formAnswers[field.id] === opt
-                              ? 'bg-rose-600 text-white border-rose-600 shadow-md scale-102'
-                              : 'bg-white text-slate-900 border-slate-300 hover:bg-slate-100'
-                          }`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                        {field.helpText && (
+                          <p className="text-[11px] text-slate-600 font-bold">{field.helpText}</p>
+                        )}
 
-                  {field.type === 'yesno' && (
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => handleAnswerChange(field.id, 'بله')}
-                        className={`px-6 py-2 rounded-xl border-2 text-xs font-black transition cursor-pointer ${
-                          formAnswers[field.id] === 'بله'
-                            ? 'bg-rose-600 text-white border-rose-600 shadow-md scale-102'
-                            : 'bg-white text-slate-900 border-slate-300 hover:bg-slate-100'
-                        }`}
-                      >
-                        بله
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleAnswerChange(field.id, 'خیر')}
-                        className={`px-6 py-2 rounded-xl border-2 text-xs font-black transition cursor-pointer ${
-                          formAnswers[field.id] === 'خیر'
-                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-md scale-102'
-                            : 'bg-white text-slate-900 border-slate-300 hover:bg-slate-100'
-                        }`}
-                      >
-                        خیر
-                      </button>
-                    </div>
-                  )}
+                        {/* Field Types */}
+                        {field.type === 'mc' && (
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {(field.options || ['دارویی', 'سقوط', 'شناسایی بیمار']).map((opt) => (
+                              <button
+                                key={opt}
+                                type="button"
+                                onClick={() => handleAnswerChange(field.id, opt)}
+                                className={`p-2.5 rounded-xl border-2 text-xs font-black transition cursor-pointer ${
+                                  formAnswers[field.id] === opt
+                                    ? 'bg-rose-600 text-white border-rose-600 shadow-md scale-102'
+                                    : 'bg-white text-slate-900 border-slate-300 hover:bg-slate-100'
+                                }`}
+                              >
+                                {opt}
+                              </button>
+                            ))}
+                          </div>
+                        )}
 
-                  {field.type === 'rating' && (
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={() => handleAnswerChange(field.id, 5)}
-                        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl border-2 text-xs font-black transition cursor-pointer ${
-                          formAnswers[field.id] === 5 ? 'bg-rose-600 text-white border-rose-600 shadow-md' : 'bg-white text-slate-900 border-slate-300'
-                        }`}
-                      >
-                        <Frown className="w-4 h-4 text-rose-600" />
-                        شدید / خطای خطرناک
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleAnswerChange(field.id, 3)}
-                        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl border-2 text-xs font-black transition cursor-pointer ${
-                          formAnswers[field.id] === 3 ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-md' : 'bg-white text-slate-900 border-slate-300'
-                        }`}
-                      >
-                        <Meh className="w-4 h-4 text-amber-600" />
-                        متوسط
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleAnswerChange(field.id, 1)}
-                        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl border-2 text-xs font-black transition cursor-pointer ${
-                          formAnswers[field.id] === 1 ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' : 'bg-white text-slate-900 border-slate-300'
-                        }`}
-                      >
-                        <Smile className="w-4 h-4 text-emerald-600" />
-                        نزدیک به وقوع (Near Miss)
-                      </button>
-                    </div>
-                  )}
+                        {field.type === 'checkbox_group' && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {(field.options || []).map((opt) => {
+                              const selectedOpts: string[] = Array.isArray(formAnswers[field.id]) ? (formAnswers[field.id] as string[]) : [];
+                              const isSelected = selectedOpts.includes(opt);
+                              return (
+                                <button
+                                  key={opt}
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = isSelected
+                                      ? selectedOpts.filter((o) => o !== opt)
+                                      : [...selectedOpts, opt];
+                                    handleAnswerChange(field.id, updated);
+                                  }}
+                                  className={`p-2.5 rounded-xl border-2 text-xs font-black transition cursor-pointer flex items-center gap-2 ${
+                                    isSelected
+                                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                                      : 'bg-white text-slate-900 border-slate-300 hover:bg-slate-100'
+                                  }`}
+                                >
+                                  <CheckSquare className="w-4 h-4" />
+                                  <span>{opt}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
 
-                  {field.type === 'text' && (
-                    <textarea
-                      rows={3}
-                      placeholder="شرح کامل حادثه..."
-                      value={formAnswers[field.id] || ''}
-                      onChange={(e) => handleAnswerChange(field.id, e.target.value)}
-                      className="w-full p-3 bg-white border-2 border-slate-300 rounded-xl text-slate-900 font-bold placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-rose-500"
-                    />
-                  )}
+                        {field.type === 'select' && (
+                          <select
+                            value={formAnswers[field.id] || ''}
+                            onChange={(e) => handleAnswerChange(field.id, e.target.value)}
+                            className="w-full px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl text-slate-900 font-extrabold text-xs"
+                          >
+                            <option value="">انتخاب کنید...</option>
+                            {(field.options || []).map((opt) => (
+                              <option key={opt} value={opt}>
+                                {opt}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+
+                        {field.type === 'yesno' && (
+                          <div className="flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => handleAnswerChange(field.id, 'بله')}
+                              className={`px-6 py-2 rounded-xl border-2 text-xs font-black transition cursor-pointer ${
+                                formAnswers[field.id] === 'بله'
+                                  ? 'bg-rose-600 text-white border-rose-600 shadow-md scale-102'
+                                  : 'bg-white text-slate-900 border-slate-300 hover:bg-slate-100'
+                              }`}
+                            >
+                              بله
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAnswerChange(field.id, 'خیر')}
+                              className={`px-6 py-2 rounded-xl border-2 text-xs font-black transition cursor-pointer ${
+                                formAnswers[field.id] === 'خیر'
+                                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-md scale-102'
+                                  : 'bg-white text-slate-900 border-slate-300 hover:bg-slate-100'
+                              }`}
+                            >
+                              خیر
+                            </button>
+                          </div>
+                        )}
+
+                        {field.type === 'rating' && (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {[1, 2, 3, 4, 5].map((lvl) => (
+                              <button
+                                key={lvl}
+                                type="button"
+                                onClick={() => handleAnswerChange(field.id, lvl)}
+                                className={`px-3.5 py-2 rounded-xl border-2 text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                                  formAnswers[field.id] === lvl
+                                    ? 'bg-rose-600 text-white border-rose-600 shadow-md'
+                                    : 'bg-white text-slate-900 border-slate-300'
+                                }`}
+                              >
+                                <span>درجه {lvl}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {field.type === 'text' && (
+                          <input
+                            type="text"
+                            placeholder={field.placeholder || 'پاسخ کوتاه را وارد کنید...'}
+                            value={formAnswers[field.id] || ''}
+                            onChange={(e) => handleAnswerChange(field.id, e.target.value)}
+                            className="w-full px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl text-slate-900 font-bold text-xs"
+                          />
+                        )}
+
+                        {field.type === 'textarea' && (
+                          <textarea
+                            rows={3}
+                            placeholder={field.placeholder || 'توضیحات کامل را وارد کنید...'}
+                            value={formAnswers[field.id] || ''}
+                            onChange={(e) => handleAnswerChange(field.id, e.target.value)}
+                            className="w-full px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl text-slate-900 font-bold text-xs"
+                          />
+                        )}
+
+                        {field.type === 'date' && (
+                          <input
+                            type="text"
+                            placeholder={field.placeholder || 'مثلاً ۱۴۰۳/۰۵/۱۵'}
+                            value={formAnswers[field.id] || ''}
+                            onChange={(e) => handleAnswerChange(field.id, e.target.value)}
+                            className="w-full px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl text-slate-900 font-bold text-xs"
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

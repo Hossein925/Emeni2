@@ -105,9 +105,12 @@ export interface SafetyMeeting {
 export interface ChecklistField {
   id: string;
   label: string;
-  type: 'mc' | 'yesno' | 'rating' | 'text';
+  type: 'mc' | 'checkbox_group' | 'select' | 'yesno' | 'rating' | 'text' | 'textarea' | 'date';
   options?: string[];
   required?: boolean;
+  helpText?: string;
+  placeholder?: string;
+  section?: string;
 }
 
 export interface Checklist {
@@ -115,6 +118,8 @@ export interface Checklist {
   title: string;
   category: 'head_nurse' | 'staff_eval' | 'error_report';
   description?: string;
+  showNonPunitiveNotice?: boolean;
+  nonPunitiveNoticeText?: string;
   fields: ChecklistField[];
   createdAt: string;
 }
@@ -139,6 +144,9 @@ export interface ErrorReport {
   answers: Record<string, any>;
   status: 'received' | 'investigating' | 'resolved';
   createdAt: string;
+  resolution?: string; // مصوبه / اقدام اصلاحی تعیین شده
+  correctiveAction?: string;
+  isPublic?: boolean; // آیا در صفحه مصوبات عمومی نمایش داده شود
 }
 
 export interface EducationCategory {
@@ -185,6 +193,7 @@ export interface SafetyVisit {
   resolutions: string;
   followUpPerson: string;
   createdAt: string;
+  isPublic?: boolean;
 }
 
 export interface Announcement {
@@ -240,6 +249,7 @@ export interface RcaReport {
   title?: string;
   createdAt: string;
   updatedAt?: string;
+  isPublic?: boolean;
 
   // Step 1: تشکیل تیم و تعریف مشکل
   teamMembers: string;
@@ -378,5 +388,6 @@ export interface FmeaReport {
   items: FmeaFailureModeItem[];
   createdAt: string;
   updatedAt?: string;
+  isPublic?: boolean;
 }
 
