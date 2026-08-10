@@ -1,0 +1,6 @@
+{
+  "name": "سامانه جامع ایمنی بیمار",
+  "description": "سامانه جامع ایمنی بیمار بیمارستانی - آموزش، مصوبات، سناریوها، گزارش خطا، RCA، FMEA و تحلیل هوش مصنوعی بر اساس منابع مرجع پزشکی و اعتباربخشی",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

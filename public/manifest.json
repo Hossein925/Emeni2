@@ -1,0 +1,17 @@
+{
+  "short_name": "ایمنی بیمار",
+  "name": "سامانه جامع مدیریت و ارزیابی ایمنی بیمار",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "display": "standalone",
+  "orientation": "portrait"
+}
