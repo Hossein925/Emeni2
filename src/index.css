@@ -92,3 +92,26 @@
   padding: 0 !important;
 }
 
+/* Educational content links styling */
+a {
+  color: #0284c7;
+  text-decoration: underline;
+  font-weight: 700;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: #0369a1;
+}
+
+.text-slate-100 a,
+.bg-slate-900 a {
+  color: #38bdf8 !important;
+}
+
+.text-slate-100 a:hover,
+.bg-slate-900 a:hover {
+  color: #7dd3fc !important;
+}
+
+
