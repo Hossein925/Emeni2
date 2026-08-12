@@ -26,7 +26,13 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { User } from '../types';
-import { checkSupabaseConnection, COMPLETE_SUPABASE_SQL_SCRIPT } from '../services/supabase';
+import {
+  checkSupabaseConnection,
+  COMPLETE_SUPABASE_SQL_SCRIPT,
+  getSupabaseConfig,
+  reinitializeSupabase,
+  clearCustomSupabaseConfig,
+} from '../services/supabase';
 import { syncDataFromSupabase } from '../services/dal';
 import {
   applyAppIcon,
@@ -69,6 +75,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [copied, setCopied] = useState(false);
   const [showDbModal, setShowDbModal] = useState(false);
   const [activeDbTab, setActiveDbTab] = useState<'sql' | 'icon'>('sql');
+
+  // Supabase Credentials State
+  const initialConfig = getSupabaseConfig();
+  const [inputSupabaseUrl, setInputSupabaseUrl] = useState(initialConfig.url);
+  const [inputSupabaseKey, setInputSupabaseKey] = useState(initialConfig.key);
+
+  const handleSaveSupabaseCredentials = () => {
+    if (!inputSupabaseUrl || !inputSupabaseKey) {
+      alert('لطفاً هر دو مقادیر آدرس Supabase URL و کلید Anon Key را وارد نمایید.');
+      return;
+    }
+    reinitializeSupabase(inputSupabaseUrl.trim(), inputSupabaseKey.trim());
+    verifyConnection();
+    alert('اطلاعات اتصال به Supabase با موفقیت به‌روزرسانی و ذخیره گردید!');
+  };
+
+  const handleResetSupabaseCredentials = () => {
+    if (confirm('آیا از بازنشانی تنظیمات اتصال دیتابیس به حالت پیش‌فرض اطمینان دارید؟')) {
+      clearCustomSupabaseConfig();
+      const current = getSupabaseConfig();
+      setInputSupabaseUrl(current.url);
+      setInputSupabaseKey(current.key);
+      verifyConnection();
+      alert('تنظیمات به حالت اولیه بازنشانی گردید.');
+    }
+  };
 
   // App Icon Management State
   const [customIconUrl, setCustomIconUrl] = useState<string>(
@@ -401,6 +433,111 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {/* TAB 1: SQL Database Management */}
               {activeDbTab === 'sql' && (
                 <div className="space-y-6">
+                  {/* Connection Status Box */}
+                  <div className={`p-4 rounded-2xl border flex items-center justify-between gap-3 ${
+                    supabaseStatus.connected
+                      ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200'
+                      : 'bg-rose-950/40 border-rose-500/40 text-rose-200'
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      {supabaseStatus.connected ? (
+                        <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0" />
+                      ) : (
+                        <XCircle className="w-6 h-6 text-rose-400 shrink-0" />
+                      )}
+                      <div>
+                        <div className="font-bold text-xs sm:text-sm">
+                          {supabaseStatus.connected ? 'اتصال به دیتابیس Supabase برقرار است' : 'دیتابیس Supabase متصل نیست'}
+                        </div>
+                        <p className="text-[11px] opacity-80 mt-0.5">{supabaseStatus.message}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Supabase URL & Key Configuration Form */}
+                  <div className="p-5 rounded-2xl bg-slate-950/90 border border-indigo-900/60 space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <div className="flex items-center gap-2">
+                        <Database className="w-5 h-5 text-amber-400" />
+                        <h4 className="text-xs sm:text-sm font-black text-white">تنظیم آدرس و کلید Supabase (ویژه ورسل و هاست)</h4>
+                      </div>
+                      <span className="text-[10px] text-indigo-300 bg-indigo-950 px-2.5 py-1 rounded-full border border-indigo-800/50">
+                        قابلیت تنظیم آنلاین
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-300 mb-1">
+                          آدرس دیتابیس (Supabase URL):
+                        </label>
+                        <input
+                          type="text"
+                          dir="ltr"
+                          value={inputSupabaseUrl}
+                          onChange={(e) => setInputSupabaseUrl(e.target.value)}
+                          placeholder="https://xxxx.supabase.co"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-cyan-300 font-mono text-xs focus:outline-none focus:border-cyan-400"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-300 mb-1">
+                          کلید عمومی (Supabase Anon Key):
+                        </label>
+                        <input
+                          type="text"
+                          dir="ltr"
+                          value={inputSupabaseKey}
+                          onChange={(e) => setInputSupabaseKey(e.target.value)}
+                          placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-400"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleSaveSupabaseCredentials}
+                          className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-lg transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                        >
+                          <Check className="w-4 h-4" />
+                          <span>ذخیره و برقراری اتصال</span>
+                        </button>
+
+                        <button
+                          onClick={handleResetSupabaseCredentials}
+                          className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer border border-slate-700"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          <span>بازنشانی پیش‌فرض</span>
+                        </button>
+                      </div>
+
+                      <div className="text-[11px] text-slate-400">
+                        💡 می‌توانید مقادیر فوق را در پنل <strong className="text-cyan-300">Supabase &rarr; Project Settings &rarr; API</strong> کپی کنید.
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vercel Environment Variables Guide */}
+                  <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-800/40 text-slate-300 text-xs leading-relaxed space-y-2">
+                    <p className="font-bold text-amber-300 flex items-center gap-1.5">
+                      <span>🚀 راهنمای اتصال همیشگی در Vercel (محیط Vercel Environment Variables):</span>
+                    </p>
+                    <p>
+                      برای اینکه برنامه در ورسل (Vercel) پس از دیپلوی همیشه متصل باشد و دیتابیس و آیکون‌ها در تمام گوشی‌ها همگام شوند، در تنظیمات پروژه ورسل خود وارد بخش <strong className="text-amber-300">Settings -&gt; Environment Variables</strong> شوید و متغیرهای زیر را اضافه کنید:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 dir-ltr text-left font-mono text-[11px] text-cyan-300 bg-slate-950/80 p-3 rounded-xl border border-slate-800">
+                      <li>VITE_SUPABASE_URL = {inputSupabaseUrl || 'https://xxxx.supabase.co'}</li>
+                      <li>VITE_SUPABASE_ANON_KEY = {inputSupabaseKey ? inputSupabaseKey.slice(0, 30) + '...' : 'eyJhbG...'}</li>
+                    </ul>
+                    <p className="text-[11px] text-slate-400">
+                      پس از ذخیره متغیرها در Vercel، دکمه <strong className="text-emerald-400">Redeploy</strong> را بزنید تا بیلد جدید ورسل تنظیمات را اعمال کند.
+                    </p>
+                  </div>
+
                   {/* Action Buttons Row */}
                   <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
                     <div className="flex items-center gap-2">
