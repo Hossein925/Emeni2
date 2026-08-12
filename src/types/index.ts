@@ -1,4 +1,4 @@
-export type UserRole = 'super_admin' | 'department_manager' | 'public';
+export type UserRole = 'super_admin' | 'patient_safety_officer' | 'department_manager' | 'public';
 
 export interface User {
   id: string;
@@ -8,6 +8,16 @@ export interface User {
   role: UserRole;
   departmentId?: string;
   departmentName?: string;
+}
+
+export interface SafetyOfficer {
+  id: string;
+  fullName: string;
+  userCode: string;
+  password?: string;
+  phoneNumber?: string;
+  position?: string;
+  createdAt: string;
 }
 
 export interface Department {
@@ -40,6 +50,9 @@ export interface SafetyIndicatorDefinition {
   targetValue?: number;
   unit: string;
   description?: string;
+  category?: string;
+  allowedDepts?: string[];
+  excludedDepts?: string[];
 }
 
 export interface SafetyIndicatorRecord {
