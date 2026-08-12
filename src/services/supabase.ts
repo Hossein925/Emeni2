@@ -2,13 +2,14 @@ import { createClient } from '@supabase/supabase-js';
 
 // Supabase Client Initialization
 export const getSupabaseConfig = () => {
+  const env = (import.meta as any).env || {};
   const url = (typeof window !== 'undefined' && (window as any).__SUPABASE_URL__) ||
     (typeof window !== 'undefined' && localStorage.getItem('custom_supabase_url')) ||
-    import.meta.env.VITE_SUPABASE_URL ||
+    env.VITE_SUPABASE_URL ||
     'https://xyzcompany.supabase.co';
   const key = (typeof window !== 'undefined' && (window as any).__SUPABASE_ANON_KEY__) ||
     (typeof window !== 'undefined' && localStorage.getItem('custom_supabase_anon_key')) ||
-    import.meta.env.VITE_SUPABASE_ANON_KEY ||
+    env.VITE_SUPABASE_ANON_KEY ||
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummykey';
   return { url, key };
 };

@@ -588,7 +588,11 @@ function saveData<T>(key: string, data: T): void {
           if (moduleErr) {
             console.warn(`Supabase upsert warning for table '${tableName}':`, moduleErr.message);
             if (tableName !== 'app_store') {
-              await supabase.from('app_store').upsert(payloadRecord).catch(() => {});
+              try {
+                await supabase.from('app_store').upsert(payloadRecord);
+              } catch {
+                // ignore
+              }
             }
           }
         } catch (err) {
