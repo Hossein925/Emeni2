@@ -21,6 +21,7 @@ export interface ClinicalIndicatorItem {
   allowedDepts: ClinicalDeptType[];
   description?: string;
   targetValue?: number;
+  excludedDepts?: string[];
 }
 
 export const CLINICAL_INDICATORS_MATRIX: ClinicalIndicatorItem[] = [
