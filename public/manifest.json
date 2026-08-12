@@ -1,6 +1,6 @@
 {
-  "short_name": "ایمنی بیمار",
-  "name": "سامانه جامع مدیریت و ارزیابی ایمنی بیمار",
+  "short_name": "Safe Care",
+  "name": "Safe Care - سامانه جامع ایمنی بیمار",
   "icons": [
     {
       "src": "/icon.svg",
