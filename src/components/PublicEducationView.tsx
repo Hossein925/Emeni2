@@ -313,8 +313,8 @@ export const PublicEducationView: React.FC<PublicEducationViewProps> = ({ onBack
           )}
         </div>
       ) : (
-        /* LEVEL 1: Main Categories Grid (2 square compact tiles per row) */
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-3xl mx-auto animate-fadeIn">
+        /* LEVEL 1: Main Categories Grid (Responsive 2/3/4 column grid) */
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4 lg:gap-5 max-w-5xl mx-auto animate-fadeIn">
           {categories.length === 0 ? (
             <div className="col-span-full py-16 text-center text-indigo-950 font-bold text-sm bg-white rounded-3xl border border-indigo-100 shadow-md">
               هنوز دسته‌بندی آموزشی تعریف نشده است.
@@ -328,11 +328,11 @@ export const PublicEducationView: React.FC<PublicEducationViewProps> = ({ onBack
                   onClick={() => setSelectedCategory(cat)}
                   className={`group text-right rounded-2xl sm:rounded-3xl bg-gradient-to-br ${
                     cat.color || 'from-blue-900 to-slate-900'
-                  } p-4 sm:p-5 text-white shadow-lg border-2 border-white/20 hover:border-amber-300 flex flex-col justify-between aspect-square hover:-translate-y-1 transition-all duration-200 cursor-pointer relative overflow-hidden`}
+                  } p-4 sm:p-5 text-white shadow-lg border-2 border-white/20 hover:border-amber-300 flex flex-col justify-between aspect-[4/3] sm:aspect-square lg:aspect-auto lg:h-36 hover:-translate-y-1 transition-all duration-200 cursor-pointer relative overflow-hidden`}
                 >
                   <div className="flex items-start justify-between w-full">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 border border-white/30 flex items-center justify-center text-amber-300 group-hover:scale-105 transition-transform shadow-md shrink-0">
-                      {renderCategoryIcon(cat.iconName, 'w-5 h-5 sm:w-6 sm:h-6')}
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 border border-white/30 flex items-center justify-center text-amber-300 group-hover:scale-105 transition-transform shadow-md shrink-0">
+                      {renderCategoryIcon(cat.iconName, 'w-4 h-4 sm:w-5 sm:h-5')}
                     </div>
                     <span className="text-[10px] sm:text-xs bg-black/40 border border-white/20 px-2.5 py-0.5 rounded-full text-white font-black shadow-sm shrink-0">
                       {catTopicCount} سرفصل
@@ -340,7 +340,7 @@ export const PublicEducationView: React.FC<PublicEducationViewProps> = ({ onBack
                   </div>
 
                   <div className="mt-auto w-full">
-                    <h3 className="text-sm sm:text-base font-black text-white mb-1 leading-snug group-hover:text-amber-300 transition-colors line-clamp-2">
+                    <h3 className="text-xs sm:text-sm font-black text-white mb-1 leading-snug group-hover:text-amber-300 transition-colors line-clamp-2">
                       {cat.title}
                     </h3>
                     <p className="text-[11px] text-cyan-100/80 font-bold line-clamp-2 leading-tight hidden sm:block">

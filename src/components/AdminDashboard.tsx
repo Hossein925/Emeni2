@@ -191,21 +191,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       </div>
 
-      {/* Admin Tiles Grid - Strictly 2 per row, Square Aspect Ratio, Icon at Top-Right, Title Only */}
-      <div className="grid grid-cols-2 gap-4 sm:gap-6 max-w-3xl mx-auto mb-12">
+      {/* Admin Tiles Grid - Responsive multi-column layout on desktop */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4 lg:gap-5 max-w-7xl mx-auto mb-12">
         {/* Tile 1: معرفی مسئولین بخش‌ها */}
         <button
           onClick={() => onSelectAdminSection('dept_managers')}
-          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-5 sm:p-7 text-white shadow-2xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-square hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
+          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-4 sm:p-5 text-white shadow-xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-[4/3] sm:aspect-square lg:aspect-auto lg:h-36 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
         >
           <div className="flex justify-start">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-cyan-300 group-hover:scale-110 group-hover:bg-cyan-500/20 shadow-lg transition-all duration-300">
-              <Building2 className="w-6 h-6 sm:w-8 sm:h-8" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-cyan-300 group-hover:scale-110 group-hover:bg-cyan-500/20 shadow-lg transition-all duration-300">
+              <Building2 className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
           <div className="z-10 mt-auto">
-            <h3 className="text-sm sm:text-base font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
-              ۱. مسئولین بخش‌ها و کارشناسان ایمنی بیمار
+            <h3 className="text-xs sm:text-sm font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
+              ۱. مسئولین بخش‌ها و کارشناسان
             </h3>
           </div>
         </button>
@@ -213,15 +213,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* Tile 2: شاخص‌های ایمنی بیمار */}
         <button
           onClick={() => onSelectAdminSection('indicators')}
-          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-5 sm:p-7 text-white shadow-2xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-square hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
+          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-4 sm:p-5 text-white shadow-xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-[4/3] sm:aspect-square lg:aspect-auto lg:h-36 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
         >
           <div className="flex justify-start">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-cyan-200 group-hover:scale-110 group-hover:bg-cyan-500/20 shadow-lg transition-all duration-300">
-              <Activity className="w-6 h-6 sm:w-8 sm:h-8" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-cyan-200 group-hover:scale-110 group-hover:bg-cyan-500/20 shadow-lg transition-all duration-300">
+              <Activity className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
           <div className="z-10 mt-auto">
-            <h3 className="text-sm sm:text-base font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
+            <h3 className="text-xs sm:text-sm font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
               ۲. شاخص‌های ایمنی بیمار
             </h3>
           </div>
@@ -230,15 +230,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* Tile 3: ارزیابی پرسنل */}
         <button
           onClick={() => onSelectAdminSection('evaluations')}
-          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-5 sm:p-7 text-white shadow-2xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-square hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
+          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-4 sm:p-5 text-white shadow-xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-[4/3] sm:aspect-square lg:aspect-auto lg:h-36 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
         >
           <div className="flex justify-start">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-emerald-300 group-hover:scale-110 group-hover:bg-emerald-500/20 shadow-lg transition-all duration-300">
-              <UserCheck className="w-6 h-6 sm:w-8 sm:h-8" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-emerald-300 group-hover:scale-110 group-hover:bg-emerald-500/20 shadow-lg transition-all duration-300">
+              <UserCheck className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
           <div className="z-10 mt-auto">
-            <h3 className="text-sm sm:text-base font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
+            <h3 className="text-xs sm:text-sm font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
               ۳. ارزیابی پرسنل
             </h3>
           </div>
@@ -247,15 +247,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* Tile 4: جلسات و خودارزیابی */}
         <button
           onClick={() => onSelectAdminSection('meetings')}
-          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-5 sm:p-7 text-white shadow-2xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-square hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
+          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-4 sm:p-5 text-white shadow-xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-[4/3] sm:aspect-square lg:aspect-auto lg:h-36 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
         >
           <div className="flex justify-start">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-indigo-300 group-hover:scale-110 group-hover:bg-indigo-500/20 shadow-lg transition-all duration-300">
-              <CalendarCheck className="w-6 h-6 sm:w-8 sm:h-8" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-indigo-300 group-hover:scale-110 group-hover:bg-indigo-500/20 shadow-lg transition-all duration-300">
+              <CalendarCheck className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
           <div className="z-10 mt-auto">
-            <h3 className="text-sm sm:text-base font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
+            <h3 className="text-xs sm:text-sm font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
               ۴. جلسات و خودارزیابی
             </h3>
           </div>
@@ -264,15 +264,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* Tile 5: چک‌لیست‌ها */}
         <button
           onClick={() => onSelectAdminSection('checklists')}
-          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-5 sm:p-7 text-white shadow-2xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-square hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
+          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-4 sm:p-5 text-white shadow-xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-[4/3] sm:aspect-square lg:aspect-auto lg:h-36 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
         >
           <div className="flex justify-start">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-purple-300 group-hover:scale-110 group-hover:bg-purple-500/20 shadow-lg transition-all duration-300">
-              <ClipboardList className="w-6 h-6 sm:w-8 sm:h-8" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-purple-300 group-hover:scale-110 group-hover:bg-purple-500/20 shadow-lg transition-all duration-300">
+              <ClipboardList className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
           <div className="z-10 mt-auto">
-            <h3 className="text-sm sm:text-base font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
+            <h3 className="text-xs sm:text-sm font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
               ۵. چک‌لیست‌ها
             </h3>
           </div>
@@ -281,15 +281,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* Tile 6: گزارش خطا */}
         <button
           onClick={() => onSelectAdminSection('error_reports')}
-          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-5 sm:p-7 text-white shadow-2xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-square hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
+          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-4 sm:p-5 text-white shadow-xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-[4/3] sm:aspect-square lg:aspect-auto lg:h-36 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
         >
           <div className="flex justify-start">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-rose-300 group-hover:scale-110 group-hover:bg-rose-500/20 shadow-lg transition-all duration-300">
-              <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-rose-300 group-hover:scale-110 group-hover:bg-rose-500/20 shadow-lg transition-all duration-300">
+              <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
           <div className="z-10 mt-auto">
-            <h3 className="text-sm sm:text-base font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
+            <h3 className="text-xs sm:text-sm font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
               ۶. گزارش خطا
             </h3>
           </div>
@@ -298,15 +298,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* Tile 7: آموزش ایمنی بیمار */}
         <button
           onClick={() => onSelectAdminSection('education')}
-          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-5 sm:p-7 text-white shadow-2xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-square hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
+          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-4 sm:p-5 text-white shadow-xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-[4/3] sm:aspect-square lg:aspect-auto lg:h-36 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
         >
           <div className="flex justify-start">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-amber-300 group-hover:scale-110 group-hover:bg-amber-500/20 shadow-lg transition-all duration-300">
-              <BookOpenCheck className="w-6 h-6 sm:w-8 sm:h-8" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-amber-300 group-hover:scale-110 group-hover:bg-amber-500/20 shadow-lg transition-all duration-300">
+              <BookOpenCheck className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
           <div className="z-10 mt-auto">
-            <h3 className="text-sm sm:text-base font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
+            <h3 className="text-xs sm:text-sm font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
               ۷. آموزش ایمنی بیمار
             </h3>
           </div>
@@ -315,15 +315,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* Tile 8: بازدیدهای ایمنی */}
         <button
           onClick={() => onSelectAdminSection('visits')}
-          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-5 sm:p-7 text-white shadow-2xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-square hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
+          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-4 sm:p-5 text-white shadow-xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-[4/3] sm:aspect-square lg:aspect-auto lg:h-36 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
         >
           <div className="flex justify-start">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-teal-300 group-hover:scale-110 group-hover:bg-teal-500/20 shadow-lg transition-all duration-300">
-              <ShieldCheck className="w-6 h-6 sm:w-8 sm:h-8" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-teal-300 group-hover:scale-110 group-hover:bg-teal-500/20 shadow-lg transition-all duration-300">
+              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
           <div className="z-10 mt-auto">
-            <h3 className="text-sm sm:text-base font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
+            <h3 className="text-xs sm:text-sm font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
               ۸. بازدیدهای ایمنی
             </h3>
           </div>
@@ -332,15 +332,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* Tile 9: نوار اطلاع‌رسانی متحرک */}
         <button
           onClick={() => onSelectAdminSection('ticker')}
-          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-5 sm:p-7 text-white shadow-2xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-square hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
+          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-4 sm:p-5 text-white shadow-xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-[4/3] sm:aspect-square lg:aspect-auto lg:h-36 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
         >
           <div className="flex justify-start">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-amber-300 group-hover:scale-110 group-hover:bg-amber-500/20 shadow-lg transition-all duration-300">
-              <Megaphone className="w-6 h-6 sm:w-8 sm:h-8" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-amber-300 group-hover:scale-110 group-hover:bg-amber-500/20 shadow-lg transition-all duration-300">
+              <Megaphone className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
           <div className="z-10 mt-auto">
-            <h3 className="text-sm sm:text-base font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
+            <h3 className="text-xs sm:text-sm font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
               ۹. نوار اطلاع‌رسانی متحرک
             </h3>
           </div>
@@ -349,16 +349,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* Tile 10: دیتابیس ابری Supabase و اسکریپت SQL */}
         <button
           onClick={() => setShowDbModal(true)}
-          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-5 sm:p-7 text-white shadow-2xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-square hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
+          className="metro-tile group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 p-4 sm:p-5 text-white shadow-xl border-2 border-indigo-300/40 hover:border-amber-400/80 flex flex-col justify-between aspect-[4/3] sm:aspect-square lg:aspect-auto lg:h-36 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer text-right"
         >
           <div className="flex justify-start">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 group-hover:bg-cyan-500/20 shadow-lg transition-all duration-300">
-              <Database className="w-6 h-6 sm:w-8 sm:h-8" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/10 border border-indigo-200/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 group-hover:bg-cyan-500/20 shadow-lg transition-all duration-300">
+              <Database className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
           <div className="z-10 mt-auto">
-            <h3 className="text-sm sm:text-base font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
-              ۱۰. مدیریت دیتابیس Supabase و اسکریپت SQL
+            <h3 className="text-xs sm:text-sm font-black text-white leading-snug tracking-tight group-hover:text-amber-300 transition-colors">
+              ۱۰. مدیریت دیتابیس و آیکون
             </h3>
           </div>
         </button>
