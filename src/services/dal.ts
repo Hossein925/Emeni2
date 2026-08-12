@@ -618,47 +618,55 @@ export async function syncDataFromSupabase(): Promise<{ success: boolean; count:
 
   isSyncingFromSupabase = true;
   let syncedCount = 0;
+  let dataHasChanged = false;
 
   try {
-    for (const [, storageKey] of Object.entries(STORAGE_KEYS)) {
-      if (storageKey === STORAGE_KEYS.CURRENT_USER) continue; // skip session key
-      const tableName = getTableName(storageKey);
+    const keysToSync = Object.values(STORAGE_KEYS).filter((k) => k !== STORAGE_KEYS.CURRENT_USER);
 
-      try {
-        let payload: any = null;
+    await Promise.all(
+      keysToSync.map(async (storageKey) => {
+        const tableName = getTableName(storageKey);
+        try {
+          let payload: any = null;
 
-        // 1. Try reading from module table
-        const { data: moduleData, error: moduleErr } = await supabase
-          .from(tableName)
-          .select('payload')
-          .eq('id', storageKey)
-          .maybeSingle();
-
-        if (!moduleErr && moduleData?.payload) {
-          payload = moduleData.payload;
-        } else if (tableName !== 'app_store') {
-          // 2. Fallback to app_store table
-          const { data: appStoreData, error: appStoreErr } = await supabase
-            .from('app_store')
+          // 1. Try reading from module table
+          const { data: moduleData, error: moduleErr } = await supabase!
+            .from(tableName)
             .select('payload')
             .eq('id', storageKey)
             .maybeSingle();
 
-          if (!appStoreErr && appStoreData?.payload) {
-            payload = appStoreData.payload;
+          if (!moduleErr && moduleData?.payload) {
+            payload = moduleData.payload;
+          } else if (tableName !== 'app_store') {
+            // 2. Fallback to app_store table
+            const { data: appStoreData, error: appStoreErr } = await supabase!
+              .from('app_store')
+              .select('payload')
+              .eq('id', storageKey)
+              .maybeSingle();
+
+            if (!appStoreErr && appStoreData?.payload) {
+              payload = appStoreData.payload;
+            }
           }
-        }
 
-        if (payload !== null && payload !== undefined) {
-          localStorage.setItem(storageKey, JSON.stringify(payload));
-          syncedCount++;
+          if (payload !== null && payload !== undefined) {
+            const stringified = JSON.stringify(payload);
+            const existing = localStorage.getItem(storageKey);
+            if (existing !== stringified) {
+              localStorage.setItem(storageKey, stringified);
+              dataHasChanged = true;
+              syncedCount++;
+            }
+          }
+        } catch (err) {
+          console.warn(`Sync key ${storageKey} failed:`, err);
         }
-      } catch (err) {
-        console.warn(`Sync key ${storageKey} failed:`, err);
-      }
-    }
+      })
+    );
 
-    if (syncedCount > 0) {
+    if (dataHasChanged) {
       notifyDALChange();
     }
 
@@ -678,11 +686,35 @@ export async function syncDataFromSupabase(): Promise<{ success: boolean; count:
   }
 }
 
-// Automatically sync from Supabase when the application starts
-if (typeof window !== 'undefined' && isSupabaseConfigured()) {
+// Continuous background auto-sync from Supabase (every 1 second + Realtime changes)
+if (typeof window !== 'undefined') {
+  // Initial sync on app load
   setTimeout(() => {
-    syncDataFromSupabase().catch(() => {});
-  }, 500);
+    if (isSupabaseConfigured() && supabase) {
+      syncDataFromSupabase().catch(() => {});
+    }
+  }, 300);
+
+  // Interval polling every 1 second
+  setInterval(() => {
+    if (isSupabaseConfigured() && supabase) {
+      syncDataFromSupabase().catch(() => {});
+    }
+  }, 1000);
+
+  // Supabase Realtime Subscription for instant broadcast
+  if (isSupabaseConfigured() && supabase) {
+    try {
+      supabase
+        .channel('public-db-changes')
+        .on('postgres_changes', { event: '*', schema: 'public' }, () => {
+          syncDataFromSupabase().catch(() => {});
+        })
+        .subscribe();
+    } catch (err) {
+      console.warn('Realtime subscription notice:', err);
+    }
+  }
 }
 
 // Data Access Layer Object
