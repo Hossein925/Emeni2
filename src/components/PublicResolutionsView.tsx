@@ -20,14 +20,21 @@ interface PublicResolutionsViewProps {
   onBack: () => void;
 }
 
+const ITEMS_PER_PAGE = 15;
+
 export const PublicResolutionsView: React.FC<PublicResolutionsViewProps> = ({ onBack }) => {
   const [items, setItems] = useState<CombinedResolution[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadAllPublicResolutions();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedFilter]);
 
   const loadAllPublicResolutions = async () => {
     setLoading(true);
@@ -148,26 +155,31 @@ export const PublicResolutionsView: React.FC<PublicResolutionsViewProps> = ({ on
     }
   };
 
+  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
+  const paginatedItems = filteredItems.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn text-right">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-indigo-200/60">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-indigo-950 flex items-center gap-2">
-            <CheckCircle2 className="w-7 h-7 text-emerald-600" />
-            مصوبات و اقدامات اصلاحی ایمنی بیمار
-          </h2>
-          <p className="text-xs sm:text-sm text-indigo-900/80 font-bold mt-1">
-            مجموعه کامل مصوبات عمومی کمیته، تحلیل‌های RCA، آنالیزهای FMEA، بازدیدها و گزارش‌های خطای بالینی
-          </p>
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn text-right" dir="rtl">
+      {/* Header with Back Button on the Right */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b border-indigo-200/60 gap-4">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 text-slate-950 font-black text-xs sm:text-sm shadow-lg active:scale-95 transition cursor-pointer shrink-0 border border-amber-300/40"
+          >
+            <ArrowRight className="w-4 h-4 text-slate-950" />
+            <span>بازگشت</span>
+          </button>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-indigo-950 flex items-center gap-2">
+              <CheckCircle2 className="w-7 h-7 text-emerald-600" />
+              مصوبات و اقدامات اصلاحی ایمنی بیمار
+            </h2>
+            <p className="text-xs sm:text-sm text-indigo-900/80 font-bold mt-1">
+              مجموعه کامل مصوبات عمومی کمیته، تحلیل‌های RCA، آنالیزهای FMEA، بازدیدها و گزارش‌های خطای بالینی
+            </p>
+          </div>
         </div>
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 active:scale-95 transition cursor-pointer ring-2 ring-amber-300/40"
-        >
-          <ArrowRight className="w-4 h-4 text-slate-950" />
-          <span>بازگشت به اعلان‌ها</span>
-        </button>
       </div>
 
       {/* Filter Tabs */}
@@ -243,7 +255,7 @@ export const PublicResolutionsView: React.FC<PublicResolutionsViewProps> = ({ on
         </div>
       ) : (
         <div className="space-y-5">
-          {filteredItems.map((res) => {
+          {paginatedItems.map((res) => {
             const badge = getSourceBadge(res.sourceType);
             return (
               <div
@@ -286,6 +298,49 @@ export const PublicResolutionsView: React.FC<PublicResolutionsViewProps> = ({ on
               </div>
             );
           })}
+
+          {/* Pagination Controls (15 items per page) */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 mt-6 border-t-2 border-slate-200 bg-white p-4 rounded-3xl shadow-sm">
+              <span className="text-xs font-extrabold text-slate-700">
+                نمایش صفحه {toPersianDigits(currentPage)} از {toPersianDigits(totalPages)} (مجموع {toPersianDigits(filteredItems.length)} مصوبه - هر صفحه ۱۵ مورد)
+              </span>
+
+              <div className="flex items-center gap-2 dir-rtl">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-900 text-xs font-black disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer border border-indigo-200"
+                >
+                  صفحه قبل
+                </button>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => setCurrentPage(p)}
+                      className={`w-9 h-9 rounded-xl text-xs font-black transition cursor-pointer ${
+                        currentPage === p
+                          ? 'bg-indigo-900 text-white shadow-md scale-105'
+                          : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
+                      }`}
+                    >
+                      {toPersianDigits(p)}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-900 text-xs font-black disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer border border-indigo-200"
+                >
+                  صفحه بعد
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

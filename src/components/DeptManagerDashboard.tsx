@@ -92,6 +92,9 @@ export const DeptManagerDashboard: React.FC<DeptManagerDashboardProps> = (props)
   const [aiModalData, setAiModalData] = useState<any>(null);
   const [aiModalTitle, setAiModalTitle] = useState('');
 
+  // Custom Indicator Definitions from DB
+  const [customIndicatorDefs, setCustomIndicatorDefs] = useState<SafetyIndicatorDefinition[]>([]);
+
   useEffect(() => {
     scrollToTopAndResetZoom();
   }, [activeTile]);
@@ -101,6 +104,10 @@ export const DeptManagerDashboard: React.FC<DeptManagerDashboardProps> = (props)
   }, [selectedDept, selectedMonth, selectedYear]);
 
   const loadData = async () => {
+    // Load indicator defs
+    const defs = await DataAccessLayer.getIndicatorDefinitions();
+    setCustomIndicatorDefs(defs);
+
     // Load records for selected clinical dept & month
     const records = await DataAccessLayer.getIndicatorRecords();
     const valuesMap: Record<string, number> = {};
@@ -192,7 +199,18 @@ export const DeptManagerDashboard: React.FC<DeptManagerDashboardProps> = (props)
 
   // Calculate statistics for currently selected department
   const totalIndicators = CLINICAL_INDICATORS_MATRIX.length;
-  const allowedIndicators = CLINICAL_INDICATORS_MATRIX.filter((item) => item.allowedDepts.includes(selectedDept));
+  const allowedIndicators = CLINICAL_INDICATORS_MATRIX.filter((item) => {
+    // Check if saved definition overrides excludedDepts
+    const savedDef = customIndicatorDefs.find((d) => d.id === item.id || d.title === item.title);
+    const excluded = savedDef?.excludedDepts || item.excludedDepts || [];
+
+    const isExcluded = excluded.some(
+      (d) => d === selectedDept || selectedDept.includes(d) || d.includes(selectedDept)
+    );
+    if (isExcluded) return false;
+
+    return item.allowedDepts.includes(selectedDept as any) || item.allowedDepts.some((d) => selectedDept.includes(d));
+  });
   const completedCount = allowedIndicators.filter((item) => indicatorValues[item.id] !== undefined && indicatorValues[item.id] !== null && indicatorValues[item.id] !== 0).length;
   const completionPercentage = Math.round((completedCount / (allowedIndicators.length || 1)) * 100);
 

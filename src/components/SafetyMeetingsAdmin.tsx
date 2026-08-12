@@ -23,6 +23,7 @@ import { downloadMeetingMinutesDocx } from '../utils/exportUtils';
 import { toPersianDigits } from '../utils/jalali';
 import { RcaFormAdmin } from './RcaFormAdmin';
 import { QuarterlySelfAssessmentAdmin } from './QuarterlySelfAssessmentAdmin';
+import { ConfirmModal } from './ConfirmModal';
 import { FmeaFormAdmin } from './FmeaFormAdmin';
 import { MedicalAiAnalyzerModal } from './MedicalAiAnalyzerModal';
 
@@ -35,6 +36,9 @@ export const SafetyMeetingsAdmin: React.FC<SafetyMeetingsAdminProps> = ({ onBack
   const [meetingSubTab, setMeetingSubTab] = useState<'create' | 'archive'>('create');
   const [meetings, setMeetings] = useState<SafetyMeeting[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  const ITEMS_PER_PAGE = 15;
 
   // AI Modal State
   const [aiModalOpen, setAiModalOpen] = useState(false);
@@ -140,14 +144,32 @@ export const SafetyMeetingsAdmin: React.FC<SafetyMeetingsAdminProps> = ({ onBack
     setMeetingSubTab('create');
   };
 
-  const handleDeleteMeeting = async (meetingId: string) => {
-    if (window.confirm('آیا از حذف این صورتجلسه اطمینان دارید؟')) {
-      await DataAccessLayer.deleteMeeting(meetingId);
-      if (editingMeetingId === meetingId) {
-        handleAddNewMeetingClick();
-      }
-      loadMeetings();
-    }
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: async () => {},
+  });
+
+  const handleDeleteMeeting = (meetingId: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'حذف صورتجلسه',
+      message: 'آیا از حذف این صورتجلسه اطمینان دارید؟',
+      onConfirm: async () => {
+        await DataAccessLayer.deleteMeeting(meetingId);
+        if (editingMeetingId === meetingId) {
+          handleAddNewMeetingClick();
+        }
+        loadMeetings();
+      },
+    });
   };
 
   const handleAddResolutionRow = () => {
@@ -224,40 +246,42 @@ export const SafetyMeetingsAdmin: React.FC<SafetyMeetingsAdminProps> = ({ onBack
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn text-right">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-indigo-200/60">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-indigo-950 flex items-center gap-2">
-            <CalendarCheck className="w-7 h-7 text-cyan-600" />
-            {selectedTile === 'meetings' && 'مدیریت و آرشیو جلسات کمیته ایمنی بیمار'}
-            {selectedTile === 'rca' && 'کاربرگ تحلیل ریشه‌ای خطا (RCA)'}
-            {selectedTile === 'quarterly' && 'خودارزیابی فصلی ایمنی بیمار'}
-            {!selectedTile && 'جلسات، خودارزیابی و مصوبات کمیته ایمنی بیمار'}
-          </h2>
-          <p className="text-xs sm:text-sm text-indigo-900/80 font-bold mt-1">
-            {selectedTile === 'meetings' && 'ثبت صورتجلسه جدید، تعیین وزن مصوبات، آرشیو جلسات و تنظیم انتشار عمومی'}
-            {selectedTile === 'rca' && 'طراحی، تکمیل و پیگیری ۷ گام کاربرگ RCA و نمودار استخوان ماهی'}
-            {selectedTile === 'quarterly' && 'ثبت ارزیابی ۲۵ استاندارد الزامی، محاسبه درصد موفقیت و خروجی Word'}
-            {!selectedTile && 'لطفاً یکی از بخش‌های زیر را برای مدیریت جلسات و ارزیابی ایمنی انتخاب کنید'}
-          </p>
-        </div>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b border-indigo-200/60 gap-4" dir="rtl">
+        <div className="flex items-center gap-3">
+          {selectedTile ? (
+            <button
+              onClick={() => setSelectedTile(null)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-black text-xs sm:text-sm shadow-lg shadow-indigo-600/25 active:scale-95 transition cursor-pointer shrink-0"
+            >
+              <ArrowRight className="w-4 h-4" />
+              <span>بازگشت</span>
+            </button>
+          ) : (
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 active:scale-95 transition cursor-pointer ring-2 ring-amber-300/40 shrink-0"
+            >
+              <ArrowRight className="w-4 h-4 text-slate-950" />
+              <span>بازگشت</span>
+            </button>
+          )}
 
-        {selectedTile ? (
-          <button
-            onClick={() => setSelectedTile(null)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-black text-xs sm:text-sm shadow-lg shadow-indigo-600/25 active:scale-95 transition cursor-pointer"
-          >
-            <ArrowRight className="w-4 h-4" />
-            <span>بازگشت به انتخاب بخش</span>
-          </button>
-        ) : (
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 active:scale-95 transition cursor-pointer ring-2 ring-amber-300/40"
-          >
-            <ArrowRight className="w-4 h-4 text-slate-950" />
-            <span>بازگشت به پنل ادمین</span>
-          </button>
-        )}
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black text-indigo-950 flex items-center gap-2">
+              <CalendarCheck className="w-7 h-7 text-cyan-600" />
+              {selectedTile === 'meetings' && 'مدیریت و آرشیو جلسات کمیته ایمنی بیمار'}
+              {selectedTile === 'rca' && 'کاربرگ تحلیل ریشه‌ای خطا (RCA)'}
+              {selectedTile === 'quarterly' && 'خودارزیابی فصلی ایمنی بیمار'}
+              {!selectedTile && 'جلسات، خودارزیابی و مصوبات کمیته ایمنی بیمار'}
+            </h2>
+            <p className="text-xs sm:text-sm text-indigo-900/80 font-bold mt-1">
+              {selectedTile === 'meetings' && 'ثبت صورتجلسه جدید، تعیین وزن مصوبات، آرشیو جلسات و تنظیم انتشار عمومی'}
+              {selectedTile === 'rca' && 'طراحی، تکمیل و پیگیری ۷ گام کاربرگ RCA و نمودار استخوان ماهی'}
+              {selectedTile === 'quarterly' && 'ثبت ارزیابی ۲۵ استاندارد الزامی، محاسبه درصد موفقیت و خروجی Word'}
+              {!selectedTile && 'لطفاً یکی از بخش‌های زیر را برای مدیریت جلسات و ارزیابی ایمنی انتخاب کنید'}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* ================= TILE SELECTION SCREEN (4 Tiles) ================= */}
@@ -694,94 +718,141 @@ export const SafetyMeetingsAdmin: React.FC<SafetyMeetingsAdminProps> = ({ onBack
                   هنوز جلسه‌ای ثبت نشده است.
                 </div>
               ) : (
-                meetings.map((m) => (
-                  <div key={m.id} className="bg-[#0c2a4a] border border-cyan-400/30 rounded-3xl p-6 shadow-2xl space-y-4 text-white">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-cyan-400/20 pb-3">
-                      <div>
-                        <h4 className="text-lg font-black text-white">{m.subject}</h4>
-                        <span className="text-xs text-cyan-300 font-bold">دبیر جلسه: {m.secretary}</span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-cyan-100 bg-cyan-950/80 px-3 py-1.5 rounded-xl border border-cyan-400/20 font-semibold">
-                          تاریخ: {m.meetingDate}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAiModalData(m);
-                            setAiModalTitle(`تحلیل صورتجلسه ایمنی: ${m.subject}`);
-                            setAiModalOpen(true);
-                          }}
-                          className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 text-white border border-purple-300/40 text-xs font-black hover:from-purple-500 hover:to-cyan-500 transition flex items-center gap-1.5 cursor-pointer shadow-md"
-                          title="تحلیل هوشمند مصوبات با استناد به منابع مرجع"
-                        >
-                          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                          <span>تحلیل با AI</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => downloadMeetingMinutesDocx(m)}
-                          className="px-3 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-200 border border-cyan-400/30 text-xs font-bold hover:bg-cyan-500/30 transition flex items-center gap-1.5 cursor-pointer"
-                          title="دانلود فایل Word صورتجلسه"
-                        >
-                          <Download className="w-3.5 h-3.5 text-cyan-300" />
-                          <span>دانلود Word</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleEditMeeting(m)}
-                          className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-200 border border-amber-400/30 text-xs font-bold hover:bg-amber-500/30 transition flex items-center gap-1.5 cursor-pointer"
-                          title="ویرایش صورتجلسه"
-                        >
-                          <Edit3 className="w-3.5 h-3.5 text-amber-300" />
-                          <span>ویرایش</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteMeeting(m.id)}
-                          className="p-2 rounded-xl bg-rose-500/20 text-rose-200 border border-rose-400/30 text-xs font-bold hover:bg-rose-500/30 transition flex items-center gap-1.5 cursor-pointer"
-                          title="حذف صورتجلسه"
-                        >
-                          <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-cyan-50 leading-relaxed font-medium">{m.description}</p>
-
-                    {/* Resolutions list inside archive */}
-                    <div className="space-y-2 pt-2">
-                      <h5 className="text-xs font-bold text-slate-400">مصوبات جلسه:</h5>
-                      {m.resolutions.map((r) => (
-                        <div
-                          key={r.id}
-                          className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
-                        >
-                          <div className="flex-1 space-y-1">
-                            <span className="font-bold text-white block">{r.text}</span>
-                            <div className="flex items-center gap-3 text-[11px] text-slate-400">
-                              <span>مسئول پیگیری: {r.responsiblePerson || 'نامشخص'}</span>
-                              <span>مهلت: {r.deadline || '---'}</span>
-                              <span>وزن: {toPersianDigits(r.weight)}</span>
-                            </div>
+                <>
+                  {meetings
+                    .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                    .map((m) => (
+                      <div key={m.id} className="bg-[#0c2a4a] border border-cyan-400/30 rounded-3xl p-6 shadow-2xl space-y-4 text-white text-right">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-cyan-400/20 pb-3">
+                          <div>
+                            <h4 className="text-lg font-black text-white">{m.subject}</h4>
+                            <span className="text-xs text-cyan-300 font-bold">دبیر جلسه: {m.secretary}</span>
                           </div>
-
-                          <button
-                            onClick={() => handleTogglePublicResolution(m.id, r.id, r.isPublic)}
-                            className={`px-3 py-1.5 rounded-xl border font-bold flex items-center gap-1.5 transition ${
-                              r.isPublic
-                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                : 'bg-slate-800 text-slate-400 border-slate-700'
-                            }`}
-                          >
-                            {r.isPublic ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                            <span>{r.isPublic ? 'نمایش عمومی فعال' : 'مخفی از عمومی'}</span>
-                          </button>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs text-cyan-100 bg-cyan-950/80 px-3 py-1.5 rounded-xl border border-cyan-400/20 font-semibold">
+                              تاریخ: {m.meetingDate}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAiModalData(m);
+                                setAiModalTitle(`تحلیل صورتجلسه ایمنی: ${m.subject}`);
+                                setAiModalOpen(true);
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 text-white border border-purple-300/40 text-xs font-black hover:from-purple-500 hover:to-cyan-500 transition flex items-center gap-1.5 cursor-pointer shadow-md"
+                              title="تحلیل هوشمند مصوبات با استناد به منابع مرجع"
+                            >
+                              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                              <span>تحلیل با AI</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => downloadMeetingMinutesDocx(m)}
+                              className="px-3 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-200 border border-cyan-400/30 text-xs font-bold hover:bg-cyan-500/30 transition flex items-center gap-1.5 cursor-pointer"
+                              title="دانلود فایل Word صورتجلسه"
+                            >
+                              <Download className="w-3.5 h-3.5 text-cyan-300" />
+                              <span>دانلود Word</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleEditMeeting(m)}
+                              className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-200 border border-amber-400/30 text-xs font-bold hover:bg-amber-500/30 transition flex items-center gap-1.5 cursor-pointer"
+                              title="ویرایش صورتجلسه"
+                            >
+                              <Edit3 className="w-3.5 h-3.5 text-amber-300" />
+                              <span>ویرایش</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteMeeting(m.id)}
+                              className="p-2 rounded-xl bg-rose-500/20 text-rose-200 border border-rose-400/30 text-xs font-bold hover:bg-rose-500/30 transition flex items-center gap-1.5 cursor-pointer"
+                              title="حذف صورتجلسه"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                            </button>
+                          </div>
                         </div>
-                      ))}
+
+                        <p className="text-xs text-cyan-50 leading-relaxed font-medium">{m.description}</p>
+
+                        {/* Resolutions list inside archive */}
+                        <div className="space-y-2 pt-2">
+                          <h5 className="text-xs font-bold text-slate-400">مصوبات جلسه:</h5>
+                          {m.resolutions.map((r) => (
+                            <div
+                              key={r.id}
+                              className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                            >
+                              <div className="flex-1 space-y-1">
+                                <span className="font-bold text-white block">{r.text}</span>
+                                <div className="flex items-center gap-3 text-[11px] text-slate-400">
+                                  <span>مسئول پیگیری: {r.responsiblePerson || 'نامشخص'}</span>
+                                  <span>مهلت: {r.deadline || '---'}</span>
+                                  <span>وزن: {toPersianDigits(r.weight)}</span>
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={() => handleTogglePublicResolution(m.id, r.id, r.isPublic)}
+                                className={`px-3 py-1.5 rounded-xl border font-bold flex items-center gap-1.5 transition ${
+                                  r.isPublic
+                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                    : 'bg-slate-800 text-slate-400 border-slate-700'
+                                }`}
+                              >
+                                {r.isPublic ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                                <span>{r.isPublic ? 'نمایش عمومی فعال' : 'مخفی از عمومی'}</span>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+
+                  {/* Pagination Controls */}
+                  {Math.ceil(meetings.length / ITEMS_PER_PAGE) > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 mt-6 border-t border-cyan-500/20 bg-[#0c2a4a] p-4 rounded-3xl shadow-xl text-white dir-rtl">
+                      <span className="text-xs font-extrabold text-cyan-200">
+                        نمایش صفحه {toPersianDigits(currentPage)} از {toPersianDigits(Math.ceil(meetings.length / ITEMS_PER_PAGE))} (مجموع {toPersianDigits(meetings.length)} صورتجلسه - هر صفحه ۱۵ مورد)
+                      </span>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                          disabled={currentPage === 1}
+                          className="px-4 py-2 rounded-xl bg-cyan-950 hover:bg-cyan-900 text-cyan-200 text-xs font-black disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer border border-cyan-500/30"
+                        >
+                          صفحه قبل
+                        </button>
+
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: Math.ceil(meetings.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).map((p) => (
+                            <button
+                              key={p}
+                              onClick={() => setCurrentPage(p)}
+                              className={`w-9 h-9 rounded-xl text-xs font-black transition cursor-pointer ${
+                                currentPage === p
+                                  ? 'bg-cyan-500 text-slate-950 shadow-md scale-105'
+                                  : 'bg-cyan-950 text-cyan-300 hover:bg-cyan-900'
+                              }`}
+                            >
+                              {toPersianDigits(p)}
+                            </button>
+                          ))}
+                        </div>
+
+                        <button
+                          onClick={() => setCurrentPage((p) => Math.min(p + 1, Math.ceil(meetings.length / ITEMS_PER_PAGE)))}
+                          disabled={currentPage === Math.ceil(meetings.length / ITEMS_PER_PAGE)}
+                          className="px-4 py-2 rounded-xl bg-cyan-950 hover:bg-cyan-900 text-cyan-200 text-xs font-black disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer border border-cyan-500/30"
+                        >
+                          صفحه بعد
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  )}
+                </>
               )}
             </div>
           )}
@@ -804,6 +875,15 @@ export const SafetyMeetingsAdmin: React.FC<SafetyMeetingsAdminProps> = ({ onBack
         contextType="SafetyMeeting"
         title={aiModalTitle}
         data={aiModalData}
+      />
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
       />
     </div>
   );

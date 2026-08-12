@@ -17,10 +17,27 @@ import {
   Clock,
   ChevronLeft,
   X,
+  Activity,
+  Stethoscope,
+  HeartPulse,
+  Syringe,
+  Thermometer,
+  Brain,
+  Microscope,
+  Hospital,
+  ClipboardList,
+  AlertTriangle,
+  FileSpreadsheet,
+  GraduationCap,
+  Award,
+  Flame,
+  ShieldCheck,
+  Zap,
 } from 'lucide-react';
 import { EducationCategory, EducationTopic } from '../types';
 import { DataAccessLayer } from '../services/dal';
 import { RichTextEditor } from './RichTextEditor';
+import { ConfirmModal } from './ConfirmModal';
 
 interface EducationAdminProps {
   onBack: () => void;
@@ -33,15 +50,40 @@ const COLOR_PRESETS = [
   { name: 'بنفش - ارغوانی', class: 'from-indigo-600 to-purple-700' },
   { name: 'نارنجی - کهربایی', class: 'from-amber-600 to-orange-700' },
   { name: 'قرمز - رز', class: 'from-rose-600 to-red-700' },
+  { name: 'یاقوتی - سرخ تیره', class: 'from-red-600 to-rose-800' },
+  { name: 'یاسی - بنفش روشن', class: 'from-fuchsia-600 to-pink-700' },
+  { name: 'نیلی - بنفش شب', class: 'from-violet-600 to-indigo-900' },
+  { name: 'آبی آسمانی - فیروزه‌ای', class: 'from-sky-500 to-cyan-700' },
+  { name: 'سبز لیمویی - زیتونی', class: 'from-lime-600 to-emerald-800' },
+  { name: 'زرد طلایی - کهربایی', class: 'from-yellow-500 to-amber-700' },
+  { name: 'ارغوانی - یاسمنی', class: 'from-pink-600 to-rose-700' },
+  { name: 'سربی - زغالی', class: 'from-slate-700 to-zinc-900' },
+  { name: 'سبز کله‌غازی - آبی تیرگی', class: 'from-teal-600 to-cyan-900' },
 ];
 
 const ICON_PRESETS = [
-  { id: 'UserCheck', label: 'شناسایی (انسان)', icon: UserCheck },
+  { id: 'UserCheck', label: 'شناسایی و هویت بیمار', icon: UserCheck },
   { id: 'Pill', label: 'دارو و درمان', icon: Pill },
-  { id: 'ShieldAlert', label: 'ایمنی و هشدار', icon: ShieldAlert },
-  { id: 'MessageSquareText', label: 'ارتباطات و SBAR', icon: MessageSquareText },
-  { id: 'Hand', label: 'بهداشت دست', icon: Hand },
-  { id: 'Layers', label: 'عمومی و لایه‌ها', icon: Layers },
+  { id: 'ShieldAlert', label: 'ایمنی و هشدار بالینی', icon: ShieldAlert },
+  { id: 'MessageSquareText', label: 'ارتباطات و ISBAR', icon: MessageSquareText },
+  { id: 'Hand', label: 'بهداشت دست و کنترل عفونت', icon: Hand },
+  { id: 'Activity', label: 'علائم حیاتی و پایش', icon: Activity },
+  { id: 'Stethoscope', label: 'معاینات پزشکی و پرستاری', icon: Stethoscope },
+  { id: 'HeartPulse', label: 'قلب و عروق / اورژانس', icon: HeartPulse },
+  { id: 'Syringe', label: 'تزریقات و ایمن‌سازی', icon: Syringe },
+  { id: 'Thermometer', label: 'تب و عفونت', icon: Thermometer },
+  { id: 'Brain', label: 'مغز و اعصاب / سکته', icon: Brain },
+  { id: 'Microscope', label: 'آزمایشگاه و پاراکلینیک', icon: Microscope },
+  { id: 'Hospital', label: 'بخش و بیمارستان', icon: Hospital },
+  { id: 'ClipboardList', label: 'چک‌لیست و پرونده', icon: ClipboardList },
+  { id: 'AlertTriangle', label: 'گزارش خطا و حوادث', icon: AlertTriangle },
+  { id: 'FileSpreadsheet', label: 'مستندسازی و فرم‌ها', icon: FileSpreadsheet },
+  { id: 'GraduationCap', label: 'آموزش و پژوهش', icon: GraduationCap },
+  { id: 'Award', label: 'اعتباربخشی و کیفیت', icon: Award },
+  { id: 'Flame', label: 'کد قرمز و ایمنی حریق', icon: Flame },
+  { id: 'Zap', label: 'اورژانس و شوک', icon: Zap },
+  { id: 'ShieldCheck', label: 'ارزیابی و ایمنی بیمار', icon: ShieldCheck },
+  { id: 'Layers', label: 'عمومی و سایر موارد', icon: Layers },
 ];
 
 export const EducationAdmin: React.FC<EducationAdminProps> = ({ onBack }) => {
@@ -125,20 +167,38 @@ export const EducationAdmin: React.FC<EducationAdminProps> = ({ onBack }) => {
     setShowCategoryForm(true);
   };
 
-  const handleDeleteCategory = async (catId: string, e?: React.MouseEvent) => {
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: async () => {},
+  });
+
+  const handleDeleteCategory = (catId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     const topicCount = topics.filter((t) => t.categoryId === catId).length;
     const msg = topicCount > 0
       ? `این دسته‌بندی دارای ${topicCount} سرفصل آموزشی زیرمجموعه است. با حذف این دسته‌بندی، تمام سرفصل‌های آن نیز حذف خواهند شد. آیا مطمئن هستید؟`
       : 'آیا از حذف این دسته‌بندی اصلی اطمینان دارید؟';
 
-    if (confirm(msg)) {
-      await DataAccessLayer.deleteEducationCategory(catId);
-      if (selectedCategory?.id === catId) {
-        setSelectedCategory(null);
-      }
-      loadAll();
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'حذف دسته‌بندی آموزشی',
+      message: msg,
+      onConfirm: async () => {
+        await DataAccessLayer.deleteEducationCategory(catId);
+        if (selectedCategory?.id === catId) {
+          setSelectedCategory(null);
+        }
+        loadAll();
+      },
+    });
   };
 
   // --- Topic Handlers ---
@@ -182,11 +242,16 @@ export const EducationAdmin: React.FC<EducationAdminProps> = ({ onBack }) => {
     setContentHtml(t.content);
   };
 
-  const handleDeleteTopic = async (id: string) => {
-    if (confirm('آیا از حذف این سرفصل آموزشی اطمینان دارید؟')) {
-      await DataAccessLayer.deleteEducationTopic(id);
-      loadAll();
-    }
+  const handleDeleteTopic = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'حذف سرفصل آموزشی',
+      message: 'آیا از حذف این سرفصل آموزشی اطمینان دارید؟',
+      onConfirm: async () => {
+        await DataAccessLayer.deleteEducationTopic(id);
+        loadAll();
+      },
+    });
   };
 
   const currentCategoryTopics = selectedCategory
@@ -196,43 +261,44 @@ export const EducationAdmin: React.FC<EducationAdminProps> = ({ onBack }) => {
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn text-right">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-indigo-200/60">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-black text-indigo-700 mb-1">
-            <span onClick={() => setSelectedCategory(null)} className="cursor-pointer hover:underline">
-              مدیریت آموزش ایمنی بیمار
-            </span>
-            {selectedCategory && (
-              <>
-                <span>/</span>
-                <span className="text-slate-800">{selectedCategory.title}</span>
-              </>
-            )}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-indigo-200/60" dir="rtl">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              if (selectedCategory) {
+                setSelectedCategory(null);
+              } else {
+                onBack();
+              }
+            }}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 active:scale-95 transition cursor-pointer ring-2 ring-amber-300/40 shrink-0"
+          >
+            <ArrowRight className="w-4 h-4 text-slate-950" />
+            <span>بازگشت</span>
+          </button>
+          <div>
+            <div className="flex items-center gap-2 text-xs font-black text-indigo-700 mb-1">
+              <span onClick={() => setSelectedCategory(null)} className="cursor-pointer hover:underline">
+                مدیریت آموزش ایمنی بیمار
+              </span>
+              {selectedCategory && (
+                <>
+                  <span>/</span>
+                  <span className="text-slate-800">{selectedCategory.title}</span>
+                </>
+              )}
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-indigo-950 flex items-center gap-2">
+              <BookOpenCheck className="w-7 h-7 text-cyan-600" />
+              {selectedCategory ? `مدیریت سرفصل‌های ${selectedCategory.title}` : 'مدیریت دسته‌بندی‌های آموزش ایمنی بیمار'}
+            </h2>
+            <p className="text-xs sm:text-sm text-indigo-900/80 font-bold mt-1">
+              {selectedCategory
+                ? 'در این بخش می‌توانید سرفصل‌های آموزشی این دسته‌بندی را ثبت، ویرایش یا حذف نمایید.'
+                : 'جهت افزودن یا ویرایش سرفصل‌های آموزشی، ابتدا وارد دسته‌بندی مربوطه شوید.'}
+            </p>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-indigo-950 flex items-center gap-2">
-            <BookOpenCheck className="w-7 h-7 text-cyan-600" />
-            {selectedCategory ? `مدیریت سرفصل‌های ${selectedCategory.title}` : 'مدیریت دسته‌بندی‌های آموزش ایمنی بیمار'}
-          </h2>
-          <p className="text-xs sm:text-sm text-indigo-900/80 font-bold mt-1">
-            {selectedCategory
-              ? 'در این بخش می‌توانید سرفصل‌های آموزشی این دسته‌بندی را ثبت، ویرایش یا حذف نمایید.'
-              : 'جهت افزودن یا ویرایش سرفصل‌های آموزشی، ابتدا وارد دسته‌بندی مربوطه شوید.'}
-          </p>
         </div>
-
-        <button
-          onClick={() => {
-            if (selectedCategory) {
-              setSelectedCategory(null);
-            } else {
-              onBack();
-            }
-          }}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 active:scale-95 transition cursor-pointer ring-2 ring-amber-300/40 self-start sm:self-auto"
-        >
-          <ArrowRight className="w-4 h-4 text-slate-950" />
-          <span>{selectedCategory ? 'بازگشت به لیست دسته‌بندی‌ها' : 'بازگشت به پنل ادمین'}</span>
-        </button>
       </div>
 
       {savedSuccess && (
@@ -602,6 +668,15 @@ export const EducationAdmin: React.FC<EducationAdminProps> = ({ onBack }) => {
           </div>
         </div>
       )}
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

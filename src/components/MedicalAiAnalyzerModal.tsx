@@ -18,8 +18,11 @@ import {
   Printer,
   HelpCircle,
   BrainCircuit,
+  Download,
 } from 'lucide-react';
 import { toPersianDigits } from '../utils/jalali';
+import { FormattedAiResponse } from './FormattedAiResponse';
+import { exportToWordDocument } from '../utils/wordExportHelper';
 
 export type MedicalAiContextType = 'RCA' | 'FMEA' | 'SAFETY_MEETING' | 'ERROR_REPORT' | 'GENERAL';
 
@@ -267,6 +270,20 @@ export const MedicalAiAnalyzerModal: React.FC<MedicalAiAnalyzerModalProps> = ({
               {analysis && (
                 <>
                   <button
+                    onClick={() =>
+                      exportToWordDocument({
+                        title: title || 'تحلیل هوش مصنوعی',
+                        subtitle: `تحلیل هوش مصنوعی • ${contextType}`,
+                        content: analysis,
+                        filename: `${title}_تحلیل_هوش_مصنوعی`,
+                      })
+                    }
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition border border-indigo-400/30 cursor-pointer shadow-md"
+                  >
+                    <Download className="w-3.5 h-3.5 text-cyan-300" />
+                    <span>دانلود Word</span>
+                  </button>
+                  <button
                     onClick={handleCopyAnalysis}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs font-bold transition border border-slate-700 cursor-pointer"
                   >
@@ -312,9 +329,11 @@ export const MedicalAiAnalyzerModal: React.FC<MedicalAiAnalyzerModalProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans whitespace-pre-wrap selection:bg-cyan-500 selection:text-slate-950">
-                {analysis}
-              </div>
+              <FormattedAiResponse
+                text={analysis}
+                title={title}
+                contextType={contextType}
+              />
             )}
           </div>
 

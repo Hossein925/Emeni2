@@ -23,6 +23,7 @@ import { toPersianDigits } from '../utils/jalali';
 import { exportRcaReportDocx } from '../utils/exportUtils';
 import { FishboneDiagram, FishboneCategoryData } from './FishboneDiagram';
 import { MedicalAiAnalyzerModal } from './MedicalAiAnalyzerModal';
+import { ConfirmModal } from './ConfirmModal';
 
 export const RcaFormAdmin: React.FC = () => {
   const [rcaList, setRcaList] = useState<RcaReport[]>([]);
@@ -30,6 +31,9 @@ export const RcaFormAdmin: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'editor'>('list');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [savedMessage, setSavedMessage] = useState(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  const ITEMS_PER_PAGE = 15;
 
   // AI Modal State
   const [aiModalOpen, setAiModalOpen] = useState(false);
@@ -160,11 +164,29 @@ export const RcaFormAdmin: React.FC = () => {
     setActiveTab('editor');
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('آیا از حذف این کاربرگ RCA اطمینان دارید؟')) {
-      await DataAccessLayer.deleteRcaReport(id);
-      loadRcaReports();
-    }
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: async () => {},
+  });
+
+  const handleDelete = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'حذف کاربرگ RCA',
+      message: 'آیا از حذف این کاربرگ RCA اطمینان دارید؟',
+      onConfirm: async () => {
+        await DataAccessLayer.deleteRcaReport(id);
+        loadRcaReports();
+      },
+    });
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -359,90 +381,137 @@ export const RcaFormAdmin: React.FC = () => {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {rcaList.map((item, idx) => (
-                <div
-                  key={item.id}
-                  className="p-5 bg-white rounded-3xl border-2 border-slate-200 hover:border-indigo-400 shadow-md transition space-y-3 flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-black border border-indigo-200">
-                        کد/نوع خطا: {item.eventTypeOrCode || 'ثبت‌نشده'}
-                      </span>
-                      <span className="text-[11px] font-bold text-slate-500">
-                        تاریخ: {toPersianDigits(item.createdAt)}
-                      </span>
-                    </div>
-
-                    <h4 className="text-sm sm:text-base font-black text-slate-900 mb-1 line-clamp-2">
-                      رویداد: {item.eventDescription || 'بدون شرح'}
-                    </h4>
-                    <p className="text-xs font-bold text-slate-600 mb-2">
-                      محل رویداد: {item.eventLocation || 'مشخص‌نشده'}
-                    </p>
-
-                    <div className="text-xs font-bold text-slate-500 space-y-1 bg-slate-50 p-3 rounded-2xl border border-slate-200">
-                      <div>اعضای تیم: {item.teamMembers || 'ثبت‌نشده'}</div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {rcaList
+                  .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                  .map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-5 bg-white rounded-3xl border-2 border-slate-200 hover:border-indigo-400 shadow-md transition space-y-3 flex flex-col justify-between text-right"
+                    >
                       <div>
-                        تعداد علل ریشه‌ای: {toPersianDigits(item.rootCausesAndActions?.length || 0)} مورد
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-black border border-indigo-200">
+                            کد/نوع خطا: {item.eventTypeOrCode || 'ثبت‌نشده'}
+                          </span>
+                          <span className="text-[11px] font-bold text-slate-500">
+                            تاریخ: {toPersianDigits(item.createdAt)}
+                          </span>
+                        </div>
+
+                        <h4 className="text-sm sm:text-base font-black text-slate-900 mb-1 line-clamp-2">
+                          رویداد: {item.eventDescription || 'بدون شرح'}
+                        </h4>
+                        <p className="text-xs font-bold text-slate-600 mb-2">
+                          محل رویداد: {item.eventLocation || 'مشخص‌نشده'}
+                        </p>
+
+                        <div className="text-xs font-bold text-slate-500 space-y-1 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                          <div>اعضای تیم: {item.teamMembers || 'ثبت‌نشده'}</div>
+                          <div>
+                            تعداد علل ریشه‌ای: {toPersianDigits(item.rootCausesAndActions?.length || 0)} مورد
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-slate-200">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAiModalData(item);
+                            setAiModalTitle(`تحلیل RCA: ${item.eventDescription || 'رویداد ایمنی بیمار'}`);
+                            setAiModalOpen(true);
+                          }}
+                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white text-xs font-black transition cursor-pointer shadow-md border border-purple-300/40"
+                          title="تحلیل هوشمند با منابع هاریسون، پوترپری، برونرسودارث و اعتباربخشی"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                          <span>تحلیل با هوش مصنوعی</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadWord(item)}
+                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black transition cursor-pointer shadow-sm"
+                          title="دانلود فایل Word با نمودار استخوان ماهی ۶ گانه"
+                        >
+                          <Download className="w-3.5 h-3.5 text-cyan-200" />
+                          <span>دانلود Word</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData(item);
+                            setActiveTab('editor');
+                            setTimeout(() => window.print(), 300);
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black transition cursor-pointer shadow-sm"
+                          title="چاپ یا پیش‌نمایش"
+                        >
+                          <Printer className="w-3.5 h-3.5" />
+                          <span>چاپ</span>
+                        </button>
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-black transition cursor-pointer"
+                        >
+                          ویرایش
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-black transition cursor-pointer"
+                          title="حذف گزارش"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
-                  </div>
+                  ))}
+              </div>
 
-                  <div className="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-slate-200">
+              {/* Pagination Controls */}
+              {Math.ceil(rcaList.length / ITEMS_PER_PAGE) > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 mt-6 border-t border-slate-200 bg-white p-4 rounded-3xl shadow-sm dir-rtl">
+                  <span className="text-xs font-extrabold text-slate-700">
+                    نمایش صفحه {toPersianDigits(currentPage)} از {toPersianDigits(Math.ceil(rcaList.length / ITEMS_PER_PAGE))} (مجموع {toPersianDigits(rcaList.length)} گزارش RCA - هر صفحه ۱۵ مورد)
+                  </span>
+
+                  <div className="flex items-center gap-2">
                     <button
-                      type="button"
-                      onClick={() => {
-                        setAiModalData(item);
-                        setAiModalTitle(`تحلیل RCA: ${item.eventDescription || 'رویداد ایمنی بیمار'}`);
-                        setAiModalOpen(true);
-                      }}
-                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white text-xs font-black transition cursor-pointer shadow-md border border-purple-300/40"
-                      title="تحلیل هوشمند با منابع هاریسون، پوترپری، برونرسودارث و اعتباربخشی"
+                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-900 text-xs font-black disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer border border-indigo-200"
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                      <span>تحلیل با هوش مصنوعی</span>
+                      صفحه قبل
                     </button>
+
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.ceil(rcaList.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).map((p) => (
+                        <button
+                          key={p}
+                          onClick={() => setCurrentPage(p)}
+                          className={`w-9 h-9 rounded-xl text-xs font-black transition cursor-pointer ${
+                            currentPage === p
+                              ? 'bg-indigo-900 text-white shadow-md scale-105'
+                              : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
+                          }`}
+                        >
+                          {toPersianDigits(p)}
+                        </button>
+                      ))}
+                    </div>
+
                     <button
-                      type="button"
-                      onClick={() => handleDownloadWord(item)}
-                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black transition cursor-pointer shadow-sm"
-                      title="دانلود فایل Word با نمودار استخوان ماهی ۶ گانه"
+                      onClick={() => setCurrentPage((p) => Math.min(p + 1, Math.ceil(rcaList.length / ITEMS_PER_PAGE)))}
+                      disabled={currentPage === Math.ceil(rcaList.length / ITEMS_PER_PAGE)}
+                      className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-900 text-xs font-black disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer border border-indigo-200"
                     >
-                      <Download className="w-3.5 h-3.5 text-cyan-200" />
-                      <span>دانلود Word</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFormData(item);
-                        setActiveTab('editor');
-                        setTimeout(() => window.print(), 300);
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black transition cursor-pointer shadow-sm"
-                      title="چاپ یا پیش‌نمایش"
-                    >
-                      <Printer className="w-3.5 h-3.5" />
-                      <span>چاپ</span>
-                    </button>
-                    <button
-                      onClick={() => handleEdit(item)}
-                      className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-black transition cursor-pointer"
-                    >
-                      ویرایش
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-black transition cursor-pointer"
-                      title="حذف گزارش"
-                    >
-                      <Trash2 className="w-4 h-4" />
+                      صفحه بعد
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       )}
@@ -1222,6 +1291,15 @@ export const RcaFormAdmin: React.FC = () => {
         contextType="RCA"
         title={aiModalTitle}
         data={aiModalData}
+      />
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
       />
     </div>
   );

@@ -3,6 +3,7 @@ import { ArrowRight, Megaphone, Plus, Trash2, Edit2, CheckCircle2, Volume2, Spar
 import { Announcement } from '../types';
 import { DataAccessLayer } from '../services/dal';
 import { RichTextEditor } from './RichTextEditor';
+import { ConfirmModal } from './ConfirmModal';
 
 interface TickerAdminProps {
   onBack: () => void;
@@ -34,14 +35,32 @@ export const TickerAdmin: React.FC<TickerAdminProps> = ({ onBack }) => {
     setSpeed(ann.speed || 25);
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('آیا از حذف این اطلاعیه اطمینان دارید؟')) {
-      await DataAccessLayer.deleteAnnouncement(id);
-      loadAnnouncements();
-      if (editingId === id) {
-        resetForm();
-      }
-    }
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: async () => {},
+  });
+
+  const handleDelete = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'حذف اطلاعیه',
+      message: 'آیا از حذف این اطلاعیه اطمینان دارید؟',
+      onConfirm: async () => {
+        await DataAccessLayer.deleteAnnouncement(id);
+        loadAnnouncements();
+        if (editingId === id) {
+          resetForm();
+        }
+      },
+    });
   };
 
   const resetForm = () => {
@@ -77,23 +96,25 @@ export const TickerAdmin: React.FC<TickerAdminProps> = ({ onBack }) => {
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn text-right">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 pb-4 border-b-2 border-indigo-200">
-        <div>
-          <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
-            <Megaphone className="w-7 h-7 text-amber-500" />
-            <span>مدیریت نوار اطلاع‌رسانی متحرک (Ticker News)</span>
-          </h2>
-          <p className="text-xs text-slate-600 mt-1 font-bold">
-            تنظیم و ویرایش متون روان صفحه اصلی با امکانات کامل ورد (Rich Text)
-          </p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b-2 border-indigo-200 gap-4" dir="rtl">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 active:scale-95 transition cursor-pointer ring-2 ring-amber-300/40 shrink-0"
+          >
+            <ArrowRight className="w-4 h-4 text-slate-950" />
+            <span>بازگشت</span>
+          </button>
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
+              <Megaphone className="w-7 h-7 text-amber-500" />
+              <span>مدیریت نوار اطلاع‌رسانی متحرک (Ticker News)</span>
+            </h2>
+            <p className="text-xs text-slate-600 mt-1 font-bold">
+              تنظیم و ویرایش متون روان صفحه اصلی با امکانات کامل ورد (Rich Text)
+            </p>
+          </div>
         </div>
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white border-2 border-slate-300 hover:bg-slate-50 text-slate-800 text-xs font-black shadow-sm transition cursor-pointer"
-        >
-          <ArrowRight className="w-4 h-4" />
-          <span>بازگشت به پنل مدیریت</span>
-        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -264,6 +285,15 @@ export const TickerAdmin: React.FC<TickerAdminProps> = ({ onBack }) => {
           )}
         </div>
       </div>
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

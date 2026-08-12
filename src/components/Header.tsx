@@ -33,7 +33,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span>سامانه جامع ایمنی بیمار</span>
               <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-extrabold hidden sm:inline-flex items-center gap-1 shadow-sm">
                 <Sparkles className="w-3 h-3 text-slate-950" />
-                بیمارستانی
+                Safe Care
               </span>
             </h1>
             <p className="text-[10px] sm:text-xs text-cyan-200/90 font-medium hidden xs:block">

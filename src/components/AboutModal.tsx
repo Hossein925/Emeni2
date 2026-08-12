@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, ShieldCheck, Target, FileSpreadsheet, Award, HeartHandshake, Send, Sparkles, User, Calendar } from 'lucide-react';
+import { X, ShieldCheck, Target, FileSpreadsheet, Award, HeartHandshake, Send, User, Calendar } from 'lucide-react';
 
 interface AboutModalProps {
   isOpen: boolean;

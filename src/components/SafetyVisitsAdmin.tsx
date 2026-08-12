@@ -89,23 +89,25 @@ export const SafetyVisitsAdmin: React.FC<SafetyVisitsAdminProps> = ({ onBack }) 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn text-right">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-indigo-200/60">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-indigo-950 flex items-center gap-2">
-            <ShieldCheck className="w-7 h-7 text-cyan-600" />
-            بازدیدهای مدیریتی ایمنی بیمار (Safety Walkarounds)
-          </h2>
-          <p className="text-xs sm:text-sm text-indigo-900/80 font-bold mt-1">
-            ثبت مشاهدات، مصوبات و اقدامات اصلاحی تیم مدیریت ایمنی در بازدیدهای میدانی از بخش‌ها
-          </p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b border-indigo-200/60 gap-4" dir="rtl">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={selectedDept ? () => setSelectedDept(null) : onBack}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 active:scale-95 transition cursor-pointer ring-2 ring-amber-300/40 shrink-0"
+          >
+            <ArrowRight className="w-4 h-4 text-slate-950" />
+            <span>بازگشت</span>
+          </button>
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black text-indigo-950 flex items-center gap-2">
+              <ShieldCheck className="w-7 h-7 text-cyan-600" />
+              بازدیدهای مدیریتی ایمنی بیمار (Safety Walkarounds)
+            </h2>
+            <p className="text-xs sm:text-sm text-indigo-900/80 font-bold mt-1">
+              ثبت مشاهدات، مصوبات و اقدامات اصلاحی تیم مدیریت ایمنی در بازدیدهای میدانی از بخش‌ها
+            </p>
+          </div>
         </div>
-        <button
-          onClick={selectedDept ? () => setSelectedDept(null) : onBack}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 active:scale-95 transition cursor-pointer ring-2 ring-amber-300/40"
-        >
-          <ArrowRight className="w-4 h-4 text-slate-950" />
-          <span>{selectedDept ? 'بازگشت به لیست بخش‌ها' : 'بازگشت به پنل ادمین'}</span>
-        </button>
       </div>
 
       {!selectedDept ? (

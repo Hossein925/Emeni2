@@ -17,28 +17,48 @@ import {
   Save,
   Trash2,
   Settings2,
+  Award,
+  GraduationCap,
+  UserCheck,
+  Eye,
+  ClipboardCheck,
+  Users,
 } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import {
   Department,
   SafetyIndicatorDefinition,
   SafetyIndicatorRecord,
+  StaffMember,
+  StaffEvaluation,
+  QuizSubmission,
 } from '../types';
 import { DataAccessLayer } from '../services/dal';
 import { JALALI_MONTHS, toPersianDigits, getCurrentJalaliYear, getCurrentJalaliMonth } from '../utils/jalali';
 import { exportToExcel } from '../utils/exportUtils';
 import { CLINICAL_INDICATORS_MATRIX, CLINICAL_DEPARTMENTS, ClinicalIndicatorItem } from '../data/indicators';
+import { StaffPersonnelReportCardModal } from './StaffPersonnelReportCardModal';
 
 interface SafetyIndicatorsAdminProps {
   onBack: () => void;
 }
 
 export const SafetyIndicatorsAdmin: React.FC<SafetyIndicatorsAdminProps> = ({ onBack }) => {
-  const [activeAdminTab, setActiveAdminTab] = useState<'monitoring' | 'customize'>('monitoring');
+  const [activeAdminTab, setActiveAdminTab] = useState<'monitoring' | 'customize' | 'report_cards'>('monitoring');
   const [departments, setDepartments] = useState<Department[]>([]);
   const [indicatorDefs, setIndicatorDefs] = useState<SafetyIndicatorDefinition[]>([]);
   const [records, setRecords] = useState<SafetyIndicatorRecord[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Personnel Report Card State
+  const [staffList, setStaffList] = useState<StaffMember[]>([]);
+  const [allEvaluations, setAllEvaluations] = useState<StaffEvaluation[]>([]);
+  const [allSubmissions, setAllSubmissions] = useState<QuizSubmission[]>([]);
+  const [selectedCardDept, setSelectedCardDept] = useState<string>('all');
+  const [staffSearchTerm, setStaffSearchTerm] = useState<string>('');
+  const [reportCardStaff, setReportCardStaff] = useState<StaffMember | null>(null);
+  const [currentPageStaff, setCurrentPageStaff] = useState<number>(1);
+  const STAFF_PER_PAGE = 15;
 
   // Indicators customization state
   const [customIndicators, setCustomIndicators] = useState<ClinicalIndicatorItem[]>(CLINICAL_INDICATORS_MATRIX);
@@ -70,10 +90,16 @@ export const SafetyIndicatorsAdmin: React.FC<SafetyIndicatorsAdminProps> = ({ on
     const depts = await DataAccessLayer.getDepartments();
     const defs = await DataAccessLayer.getIndicatorDefinitions();
     const recs = await DataAccessLayer.getIndicatorRecords();
+    const staff = await DataAccessLayer.getStaffMembers();
+    const evals = await DataAccessLayer.getEvaluations();
+    const subs = await DataAccessLayer.getQuizSubmissions();
     
     setDepartments(depts);
     setIndicatorDefs(defs);
     setRecords(recs);
+    setStaffList(staff);
+    setAllEvaluations(evals);
+    setAllSubmissions(subs);
     setLoading(false);
   };
 
@@ -182,29 +208,29 @@ export const SafetyIndicatorsAdmin: React.FC<SafetyIndicatorsAdminProps> = ({ on
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn text-right">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b border-indigo-200/60 gap-4">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-indigo-950 flex items-center gap-2">
-            <Activity className="w-8 h-8 text-cyan-600" />
-            شاخص‌های ایمنی بیمار بیمارستان (پنل نظارت مدیریت)
-          </h2>
-          <p className="text-xs sm:text-sm text-indigo-900/80 font-bold mt-1">
-            تجمیع، پایش و تحلیل خودکار داده‌ها و آمار شاخص‌های ایمنی ثبت‌شده توسط مسئولین بخش‌ها
-          </p>
-        </div>
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b border-indigo-200/60 gap-4" dir="rtl">
+        <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 active:scale-95 transition cursor-pointer ring-2 ring-amber-300/40"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 active:scale-95 transition cursor-pointer ring-2 ring-amber-300/40 shrink-0"
           >
             <ArrowRight className="w-4 h-4 text-slate-950" />
-            <span>بازگشت به پنل ادمین</span>
+            <span>بازگشت</span>
           </button>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-indigo-950 flex items-center gap-2">
+              <Activity className="w-7 h-7 text-cyan-600" />
+              شاخص‌های ایمنی بیمار بیمارستان (پنل نظارت مدیریت)
+            </h2>
+            <p className="text-xs sm:text-sm text-indigo-900/80 font-bold mt-1">
+              تجمیع، پایش و تحلیل خودکار داده‌ها و آمار شاخص‌های ایمنی ثبت‌شده توسط مسئولین بخش‌ها
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Sub-Tabs Selector */}
-      <div className="flex items-center gap-3 mb-6 bg-white p-2 rounded-2xl border-2 border-indigo-200 shadow-lg">
+      <div className="flex flex-wrap items-center gap-3 mb-6 bg-white p-2 rounded-2xl border-2 border-indigo-200 shadow-lg">
         <button
           onClick={() => setActiveAdminTab('monitoring')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs transition cursor-pointer ${
@@ -227,9 +253,207 @@ export const SafetyIndicatorsAdmin: React.FC<SafetyIndicatorsAdminProps> = ({ on
           <Settings2 className="w-4 h-4 text-amber-400" />
           <span>مدیریت و ویرایش سوالات / عناوین شاخص‌های بخش‌ها</span>
         </button>
+        <button
+          onClick={() => setActiveAdminTab('report_cards')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs transition cursor-pointer ${
+            activeAdminTab === 'report_cards'
+              ? 'bg-indigo-900 text-white shadow-md'
+              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+          }`}
+        >
+          <Award className="w-4 h-4 text-emerald-400" />
+          <span>کارنامه پرسنلی پرسنل به تفکیک بخش‌ها</span>
+        </button>
       </div>
 
-      {activeAdminTab === 'customize' ? (
+      {activeAdminTab === 'report_cards' ? (
+        <div className="bg-white border-2 border-indigo-200 rounded-3xl p-6 sm:p-8 shadow-2xl text-slate-900 space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b-2 border-slate-200">
+            <div>
+              <h3 className="text-xl font-black text-indigo-950 flex items-center gap-2">
+                <Award className="w-6 h-6 text-emerald-600" />
+                کارنامه عملکرد و سنجش دانش پرسنل بخش‌ها
+              </h3>
+              <p className="text-xs text-slate-700 font-bold mt-1">
+                مشاهده نمرات آزمون‌ها، ارزیابی چک‌لیست‌های ایمنی و دریافت کارنامه جامع پرسنل بیمارستان
+              </p>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">انتخاب بخش:</label>
+              <select
+                value={selectedCardDept}
+                onChange={(e) => {
+                  setSelectedCardDept(e.target.value);
+                  setCurrentPageStaff(1);
+                }}
+                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="all">تمام بخش‌های بیمارستان</option>
+                {CLINICAL_DEPARTMENTS.map((dept) => (
+                  <option key={dept} value={dept}>
+                    بخش {dept}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">جستجوی پرسنل:</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="جستجوی نام یا کد پرسنلی..."
+                  value={staffSearchTerm}
+                  onChange={(e) => {
+                    setStaffSearchTerm(e.target.value);
+                    setCurrentPageStaff(1);
+                  }}
+                  className="w-full bg-white border border-slate-300 rounded-xl pr-9 pl-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Staff Grid / Table */}
+          {(() => {
+            const filteredStaff = staffList.filter((s) => {
+              const matchDept =
+                selectedCardDept === 'all' ||
+                s.departmentName === selectedCardDept ||
+                s.departmentName.includes(selectedCardDept) ||
+                selectedCardDept.includes(s.departmentName);
+              const matchSearch =
+                !staffSearchTerm.trim() ||
+                s.fullName.toLowerCase().includes(staffSearchTerm.toLowerCase()) ||
+                (s.personnelCode && s.personnelCode.includes(staffSearchTerm));
+              return matchDept && matchSearch;
+            });
+
+            const totalStaffPages = Math.ceil(filteredStaff.length / STAFF_PER_PAGE);
+            const paginatedStaff = filteredStaff.slice(
+              (currentPageStaff - 1) * STAFF_PER_PAGE,
+              currentPageStaff * STAFF_PER_PAGE
+            );
+
+            if (filteredStaff.length === 0) {
+              return (
+                <div className="py-12 text-center text-slate-500 font-bold text-xs bg-slate-50 rounded-2xl border border-slate-200">
+                  هیچ پرسنلی مطابق با فیلتر انتخابی یافت نشد.
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {paginatedStaff.map((staff) => {
+                    const staffEvals = allEvaluations.filter((ev) => ev.staffId === staff.id);
+                    const staffSubs = allSubmissions.filter((sub) => sub.staffId === staff.id);
+
+                    const avgEval =
+                      staffEvals.length > 0
+                        ? Math.round(
+                            staffEvals.reduce((a, c) => a + (c.scorePercentage || 0), 0) / staffEvals.length
+                          )
+                        : null;
+
+                    const avgQuiz =
+                      staffSubs.length > 0
+                        ? Math.round(
+                            staffSubs.reduce((a, c) => a + (c.scorePercentage || 0), 0) / staffSubs.length
+                          )
+                        : null;
+
+                    return (
+                      <div
+                        key={staff.id}
+                        className="bg-white border-2 border-slate-200 hover:border-indigo-400 p-4 rounded-2xl shadow-sm hover:shadow-md transition space-y-3 flex flex-col justify-between"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between gap-2 border-b pb-2 border-slate-100">
+                            <span className="font-black text-sm text-slate-900">{staff.fullName}</span>
+                            <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-900 text-[10px] font-black">
+                              بخش {staff.departmentName}
+                            </span>
+                          </div>
+
+                          <div className="text-xs text-slate-600 font-bold space-y-1">
+                            <div>کد پرسنلی: {toPersianDigits(staff.personnelCode || '---')}</div>
+                            <div>سمت/نقش: {staff.role || 'کادر درمان'}</div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 pt-2 text-[11px] font-extrabold text-center">
+                            <div className="bg-emerald-50 border border-emerald-200 p-2 rounded-xl text-emerald-900">
+                              <div>میانگین چک‌لیست</div>
+                              <div className="text-sm font-black text-emerald-700 mt-0.5">
+                                {avgEval !== null ? `%${toPersianDigits(avgEval)}` : 'ثبت‌نشده'}
+                              </div>
+                            </div>
+                            <div className="bg-purple-50 border border-purple-200 p-2 rounded-xl text-purple-900">
+                              <div>میانگین آزمون‌ها</div>
+                              <div className="text-sm font-black text-purple-700 mt-0.5">
+                                {avgQuiz !== null ? `%${toPersianDigits(avgQuiz)}` : 'ثبت‌نشده'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => setReportCardStaff(staff)}
+                          className="w-full py-2 rounded-xl bg-indigo-900 hover:bg-indigo-950 text-white font-black text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                        >
+                          <Eye className="w-4 h-4 text-amber-300" />
+                          <span>مشاهده و چاپ کارنامه جامع</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalStaffPages > 1 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200 bg-slate-50 p-3 rounded-2xl">
+                    <span className="text-xs font-bold text-slate-700">
+                      صفحه {toPersianDigits(currentPageStaff)} از {toPersianDigits(totalStaffPages)} (مجموع {toPersianDigits(filteredStaff.length)} پرسنل)
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setCurrentPageStaff((p) => Math.max(p - 1, 1))}
+                        disabled={currentPageStaff === 1}
+                        className="px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-800 disabled:opacity-40"
+                      >
+                        قبلی
+                      </button>
+                      <button
+                        onClick={() => setCurrentPageStaff((p) => Math.min(p + 1, totalStaffPages))}
+                        disabled={currentPageStaff === totalStaffPages}
+                        className="px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-800 disabled:opacity-40"
+                      >
+                        بعدی
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Modal for Personnel Report Card */}
+          {reportCardStaff && (
+            <StaffPersonnelReportCardModal
+              staff={reportCardStaff}
+              evaluations={allEvaluations.filter((ev) => ev.staffId === reportCardStaff.id)}
+              submissions={allSubmissions.filter((sub) => sub.staffId === reportCardStaff.id)}
+              onClose={() => setReportCardStaff(null)}
+            />
+          )}
+        </div>
+      ) : activeAdminTab === 'customize' ? (
         <div className="bg-white border-2 border-indigo-200 rounded-3xl p-6 sm:p-8 shadow-2xl text-slate-900 space-y-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b-2 border-slate-200">
             <div>
@@ -336,6 +560,47 @@ export const SafetyIndicatorsAdmin: React.FC<SafetyIndicatorsAdminProps> = ({ on
                 />
               </div>
 
+              {/* Excluded Departments Selection */}
+              <div className="space-y-2 pt-2 border-t border-slate-200">
+                <label className="text-xs font-black text-rose-800 block">
+                  استثنائات بخش‌ها (انتخاب بخش‌هایی که این شاخص نباید برای آن‌ها نمایش داده شود و جزء شاخص‌های آن بخش نیست):
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 max-h-44 overflow-y-auto custom-scrollbar">
+                  {CLINICAL_DEPARTMENTS.map((deptName) => {
+                    const currentExcluded = isAddingNew ? newItem.excludedDepts || [] : editingItem?.excludedDepts || [];
+                    const isChecked = currentExcluded.includes(deptName);
+
+                    return (
+                      <label
+                        key={deptName}
+                        className={`flex items-center gap-2 p-1.5 rounded-xl border cursor-pointer transition text-xs font-bold ${
+                          isChecked
+                            ? 'bg-rose-50 border-rose-300 text-rose-900 font-black'
+                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            const updated = e.target.checked
+                              ? [...currentExcluded, deptName]
+                              : currentExcluded.filter((d) => d !== deptName);
+                            if (isAddingNew) {
+                              setNewItem({ ...newItem, excludedDepts: updated });
+                            } else if (editingItem) {
+                              setEditingItem({ ...editingItem, excludedDepts: updated });
+                            }
+                          }}
+                          className="rounded border-rose-300 text-rose-600 focus:ring-rose-500 w-4 h-4 cursor-pointer"
+                        />
+                        <span>بخش {deptName}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
                   type="button"
@@ -361,6 +626,8 @@ export const SafetyIndicatorsAdmin: React.FC<SafetyIndicatorsAdminProps> = ({ on
                       unit: itemToSave.unit,
                       targetValue: itemToSave.targetValue || 0,
                       description: itemToSave.description,
+                      category: itemToSave.category,
+                      excludedDepts: itemToSave.excludedDepts || [],
                     });
                     if (isAddingNew) {
                       setCustomIndicators((prev) => [...prev, newItem]);
@@ -371,12 +638,12 @@ export const SafetyIndicatorsAdmin: React.FC<SafetyIndicatorsAdminProps> = ({ on
                     }
                     setIsAddingNew(false);
                     setEditingItem(null);
-                    alert('شاخص با موفقیت ثبت و به روزرسانی شد.');
+                    alert('شاخص با موفقیت ثبت و استثنائات بخش‌ها ذخیره گردید.');
                   }}
                   className="px-6 py-2 rounded-xl bg-indigo-900 text-white text-xs font-black hover:bg-indigo-950 transition cursor-pointer shadow-md flex items-center gap-1.5"
                 >
                   <Save className="w-4 h-4" />
-                  <span>ذخیره تغییرات</span>
+                  <span>ذخیره تغییرات و استثنائات</span>
                 </button>
               </div>
             </div>

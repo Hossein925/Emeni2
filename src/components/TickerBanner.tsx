@@ -98,7 +98,7 @@ export const TickerBanner: React.FC<TickerBannerProps> = ({ currentUser, onEditT
             </span>
           </div>
         </div>
-        {currentUser?.role === 'super_admin' && onEditTicker && (
+        {(currentUser?.role === 'super_admin' || currentUser?.role === 'patient_safety_officer') && onEditTicker && (
           <button
             onClick={onEditTicker}
             className="px-4 py-2 rounded-2xl bg-amber-400 text-slate-950 font-black text-xs hover:bg-amber-300 transition flex items-center gap-1.5 shrink-0 cursor-pointer shadow-md"
@@ -145,7 +145,7 @@ export const TickerBanner: React.FC<TickerBannerProps> = ({ currentUser, onEditT
             <span>{isPaused ? 'شروع' : 'توقف'}</span>
           </button>
 
-          {currentUser?.role === 'super_admin' && onEditTicker && (
+          {(currentUser?.role === 'super_admin' || currentUser?.role === 'patient_safety_officer') && onEditTicker && (
             <button
               onClick={onEditTicker}
               title="ویرایش نوار اطلاع‌رسانی"

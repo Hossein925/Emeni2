@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { EducationalContentRenderer } from './EducationalContentRenderer';
 import {
   ArrowRight,
   BookOpen,
@@ -13,6 +14,22 @@ import {
   CheckCircle2,
   ChevronLeft,
   FileText,
+  Activity,
+  Stethoscope,
+  HeartPulse,
+  Syringe,
+  Thermometer,
+  Brain,
+  Microscope,
+  Hospital,
+  ClipboardList,
+  AlertTriangle,
+  FileSpreadsheet,
+  GraduationCap,
+  Award,
+  Flame,
+  ShieldCheck,
+  Zap,
 } from 'lucide-react';
 import { EducationCategory, EducationTopic } from '../types';
 import { DataAccessLayer } from '../services/dal';
@@ -34,6 +51,38 @@ const renderCategoryIcon = (iconName?: string, className: string = 'w-5 h-5') =>
       return <MessageSquareText className={className} />;
     case 'Hand':
       return <Hand className={className} />;
+    case 'Activity':
+      return <Activity className={className} />;
+    case 'Stethoscope':
+      return <Stethoscope className={className} />;
+    case 'HeartPulse':
+      return <HeartPulse className={className} />;
+    case 'Syringe':
+      return <Syringe className={className} />;
+    case 'Thermometer':
+      return <Thermometer className={className} />;
+    case 'Brain':
+      return <Brain className={className} />;
+    case 'Microscope':
+      return <Microscope className={className} />;
+    case 'Hospital':
+      return <Hospital className={className} />;
+    case 'ClipboardList':
+      return <ClipboardList className={className} />;
+    case 'AlertTriangle':
+      return <AlertTriangle className={className} />;
+    case 'FileSpreadsheet':
+      return <FileSpreadsheet className={className} />;
+    case 'GraduationCap':
+      return <GraduationCap className={className} />;
+    case 'Award':
+      return <Award className={className} />;
+    case 'Flame':
+      return <Flame className={className} />;
+    case 'ShieldCheck':
+      return <ShieldCheck className={className} />;
+    case 'Zap':
+      return <Zap className={className} />;
     default:
       return <Layers className={className} />;
   }
@@ -168,10 +217,7 @@ export const PublicEducationView: React.FC<PublicEducationViewProps> = ({ onBack
           </div>
 
           {/* Rich Content Render */}
-          <div
-            className="text-slate-900 text-sm font-bold leading-relaxed space-y-4 max-w-none pt-2"
-            dangerouslySetInnerHTML={{ __html: selectedTopic.content }}
-          />
+          <EducationalContentRenderer html={selectedTopic.content} className="pt-2" />
 
           {/* Completion Mark Footer */}
           <div className="pt-6 border-t-2 border-slate-100 flex items-center justify-between flex-wrap gap-4">

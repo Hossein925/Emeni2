@@ -38,6 +38,7 @@ import { DataAccessLayer } from '../services/dal';
 import { QUARTERLY_STANDARDS } from '../data/quarterlyStandards';
 import { downloadQuarterlySelfAssessmentDocx } from '../utils/exportUtils';
 import { toPersianDigits, getCurrentJalaliYear } from '../utils/jalali';
+import { ConfirmModal } from './ConfirmModal';
 
 export const QuarterlySelfAssessmentAdmin: React.FC = () => {
   const [assessments, setAssessments] = useState<QuarterlySelfAssessment[]>([]);
@@ -144,11 +145,29 @@ export const QuarterlySelfAssessmentAdmin: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const handleDeleteAssessment = async (id: string) => {
-    if (window.confirm('آیا از حذف این خودارزیابی فصلی اطمینان دارید؟')) {
-      await DataAccessLayer.deleteQuarterlySelfAssessment(id);
-      loadAssessments();
-    }
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: async () => {},
+  });
+
+  const handleDeleteAssessment = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'حذف خودارزیابی',
+      message: 'آیا از حذف این خودارزیابی فصلی اطمینان دارید؟',
+      onConfirm: async () => {
+        await DataAccessLayer.deleteQuarterlySelfAssessment(id);
+        loadAssessments();
+      },
+    });
   };
 
   const handleScoreChange = (code: string, val: number) => {
@@ -1055,6 +1074,15 @@ export const QuarterlySelfAssessmentAdmin: React.FC = () => {
           </form>
         </div>
       )}
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

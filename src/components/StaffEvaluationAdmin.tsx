@@ -28,6 +28,7 @@ import { Department, Checklist, StaffEvaluation, QuizExam, QuizQuestion, QuizSub
 import { DataAccessLayer } from '../services/dal';
 import { JALALI_MONTHS, toPersianDigits, getCurrentJalaliYear, getCurrentJalaliMonth } from '../utils/jalali';
 import { downloadStaffSafetyReportCardDocx } from '../utils/exportUtils';
+import { ConfirmModal } from './ConfirmModal';
 import { StaffPersonnelReportCardModal } from './StaffPersonnelReportCardModal';
 
 interface StaffEvaluationAdminProps {
@@ -218,12 +219,30 @@ export const StaffEvaluationAdmin: React.FC<StaffEvaluationAdminProps> = ({ onBa
     setIsExamModalOpen(true);
   };
 
-  const handleDeleteExam = async (id: string) => {
-    if (confirm('آیا از حذف این آزمون و سوالات آن اطمینان دارید؟')) {
-      await DataAccessLayer.deleteQuizExam(id);
-      const updated = await DataAccessLayer.getQuizExams();
-      setExams(updated);
-    }
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: async () => {},
+  });
+
+  const handleDeleteExam = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'حذف آزمون',
+      message: 'آیا از حذف این آزمون و سوالات آن اطمینان دارید؟',
+      onConfirm: async () => {
+        await DataAccessLayer.deleteQuizExam(id);
+        const updated = await DataAccessLayer.getQuizExams();
+        setExams(updated);
+      },
+    });
   };
 
   const resetQuestionForm = () => {
@@ -352,54 +371,56 @@ export const StaffEvaluationAdmin: React.FC<StaffEvaluationAdminProps> = ({ onBa
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn text-right">
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-indigo-200/60">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-indigo-950 flex items-center gap-2">
-            <UserCheck className="w-8 h-8 text-cyan-600" />
-            {selectedTile === 'checklist' && 'ارزیابی پرسنل بر اساس چک‌لیست'}
-            {selectedTile === 'quiz_menu' && 'ارزیابی دانش پرسنل با آزمون آنلاین'}
-            {selectedTile === 'quiz_designer' && 'طراحی و ویرایش آزمون‌های ثبت‌شده'}
-            {selectedTile === 'quiz_results' && 'نتایج و کارنامه‌های آزمون‌های پرسنل'}
-            {selectedTile === 'results' && 'سوابق، کارنامه‌ها و نمودارهای ارزیابی پرسنل'}
-            {!selectedTile && 'ارزیابی دانش و عملکرد ایمنی بیمار پرسنل'}
-          </h2>
-          <p className="text-xs sm:text-sm text-indigo-900/80 font-bold mt-1">
-            {selectedTile === 'checklist' && 'تکمیل بنود چک‌لیست ارزیابی دانش ایمنی برای کادر درمان و محاسبه نمره'}
-            {selectedTile === 'quiz_menu' && 'لطفاً یکی از گزینه‌های زیر را جهت طراحی آزمون یا مشاهده نتایج انتخاب کنید'}
-            {selectedTile === 'quiz_designer' && 'تعریف بانک سوالات ۴ گزینه‌ای و تشریحی، تنظیم زمان و فعال‌سازی آزمون'}
-            {selectedTile === 'quiz_results' && 'مشاهده نمرات و پاسخ‌های ثبت‌شده پرسنل در آزمون‌های آنلاین'}
-            {selectedTile === 'results' && 'مشاهده سوابق ارزیابی، پایش نمودار ماهانه و خروجی Word کارنامه ایمنی بیمار'}
-            {!selectedTile && 'لطفاً یکی از بخش‌های ارزیابی زیر را انتخاب کنید'}
-          </p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b border-indigo-200/60 gap-4" dir="rtl">
+        <div className="flex items-center gap-3">
+          {selectedTile ? (
+            <button
+              onClick={() => {
+                if (selectedTile === 'quiz_designer' || selectedTile === 'quiz_results') {
+                  setSelectedTile('quiz_menu');
+                } else {
+                  setSelectedTile(null);
+                }
+              }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-black text-xs sm:text-sm shadow-lg shadow-indigo-600/25 active:scale-95 transition cursor-pointer shrink-0"
+            >
+              <ArrowRight className="w-4 h-4" />
+              <span>
+                {selectedTile === 'quiz_designer' || selectedTile === 'quiz_results'
+                  ? 'بازگشت'
+                  : 'بازگشت'}
+              </span>
+            </button>
+          ) : (
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 active:scale-95 transition cursor-pointer ring-2 ring-amber-300/40 shrink-0"
+            >
+              <ArrowRight className="w-4 h-4 text-slate-950" />
+              <span>بازگشت</span>
+            </button>
+          )}
+
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black text-indigo-950 flex items-center gap-2">
+              <UserCheck className="w-8 h-8 text-cyan-600" />
+              {selectedTile === 'checklist' && 'ارزیابی پرسنل بر اساس چک‌لیست'}
+              {selectedTile === 'quiz_menu' && 'ارزیابی دانش پرسنل با آزمون آنلاین'}
+              {selectedTile === 'quiz_designer' && 'طراحی و ویرایش آزمون‌های ثبت‌شده'}
+              {selectedTile === 'quiz_results' && 'نتایج و کارنامه‌های آزمون‌های پرسنل'}
+              {selectedTile === 'results' && 'سوابق، کارنامه‌ها و نمودارهای ارزیابی پرسنل'}
+              {!selectedTile && 'ارزیابی دانش و عملکرد ایمنی بیمار پرسنل'}
+            </h2>
+            <p className="text-xs sm:text-sm text-indigo-900/80 font-bold mt-1">
+              {selectedTile === 'checklist' && 'تکمیل بنود چک‌لیست ارزیابی دانش ایمنی برای کادر درمان و محاسبه نمره'}
+              {selectedTile === 'quiz_menu' && 'لطفاً یکی از گزینه‌های زیر را جهت طراحی آزمون یا مشاهده نتایج انتخاب کنید'}
+              {selectedTile === 'quiz_designer' && 'تعریف بانک سوالات ۴ گزینه‌ای و تشریحی، تنظیم زمان و فعال‌سازی آزمون'}
+              {selectedTile === 'quiz_results' && 'مشاهده نمرات و پاسخ‌های ثبت‌شده پرسنل در آزمون‌های آنلاین'}
+              {selectedTile === 'results' && 'مشاهده سوابق ارزیابی، پایش نمودار ماهانه و خروجی Word کارنامه ایمنی بیمار'}
+              {!selectedTile && 'لطفاً یکی از بخش‌های ارزیابی زیر را انتخاب کنید'}
+            </p>
+          </div>
         </div>
-        
-        {selectedTile ? (
-          <button
-            onClick={() => {
-              if (selectedTile === 'quiz_designer' || selectedTile === 'quiz_results') {
-                setSelectedTile('quiz_menu');
-              } else {
-                setSelectedTile(null);
-              }
-            }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-black text-xs sm:text-sm shadow-lg shadow-indigo-600/25 active:scale-95 transition cursor-pointer"
-          >
-            <ArrowRight className="w-4 h-4" />
-            <span>
-              {selectedTile === 'quiz_designer' || selectedTile === 'quiz_results'
-                ? 'بازگشت به منوی آزمون‌ها'
-                : 'بازگشت به انتخاب بخش'}
-            </span>
-          </button>
-        ) : (
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 active:scale-95 transition cursor-pointer ring-2 ring-amber-300/40"
-          >
-            <ArrowRight className="w-4 h-4 text-slate-950" />
-            <span>بازگشت به پنل ادمین</span>
-          </button>
-        )}
       </div>
 
       {/* ================= TILE SELECTION SCREEN ================= */}
@@ -1336,6 +1357,15 @@ export const StaffEvaluationAdmin: React.FC<StaffEvaluationAdminProps> = ({ onBa
           </div>
         </div>
       )}
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

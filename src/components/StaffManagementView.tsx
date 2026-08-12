@@ -22,6 +22,7 @@ import { StaffMember, Department } from '../types';
 import { DataAccessLayer } from '../services/dal';
 import { toPersianDigits } from '../utils/jalali';
 import { StaffPersonnelReportCardModal } from './StaffPersonnelReportCardModal';
+import { ConfirmModal } from './ConfirmModal';
 
 interface StaffManagementViewProps {
   departmentName: string;
@@ -149,11 +150,29 @@ export const StaffManagementView: React.FC<StaffManagementViewProps> = ({
     loadData();
   };
 
-  const handleDeleteStaff = async (staff: StaffMember) => {
-    if (confirm(`آیا از حذف پرسنل "${staff.fullName}" با کد ملی ${staff.nationalId} اطمینان دارید؟`)) {
-      await DataAccessLayer.deleteStaffMember(staff.id);
-      loadData();
-    }
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: async () => {},
+  });
+
+  const handleDeleteStaff = (staff: StaffMember) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'حذف پرسنل',
+      message: `آیا از حذف پرسنل "${staff.fullName}" با کد ملی ${staff.nationalId} اطمینان دارید؟`,
+      onConfirm: async () => {
+        await DataAccessLayer.deleteStaffMember(staff.id);
+        loadData();
+      },
+    });
   };
 
   // Filtered list
@@ -509,6 +528,15 @@ export const StaffManagementView: React.FC<StaffManagementViewProps> = ({
           onClose={() => setReportCardStaff(null)}
         />
       )}
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+      />
 
     </div>
   );

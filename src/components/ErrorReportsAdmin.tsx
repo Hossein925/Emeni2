@@ -43,24 +43,25 @@ export const ErrorReportsAdmin: React.FC<ErrorReportsAdminProps> = ({ onBack }) 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn text-right">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-4 border-b border-indigo-200/60">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-indigo-950 flex items-center gap-2">
-            <AlertTriangle className="w-7 h-7 text-rose-600" />
-            مدیریت، پایش و طراحی فرم گزارش خطا
-          </h2>
-          <p className="text-xs sm:text-sm text-indigo-900/80 font-bold mt-1">
-            مشاهده گزارش‌های دریافتی، تحلیل RCA و ویرایش آنلاین سوالات فرم گزارش خطای بیمارستان
-          </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-4 border-b border-indigo-200/60" dir="rtl">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 active:scale-95 transition cursor-pointer ring-2 ring-amber-300/40 shrink-0"
+          >
+            <ArrowRight className="w-4 h-4 text-slate-950" />
+            <span>بازگشت</span>
+          </button>
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black text-indigo-950 flex items-center gap-2">
+              <AlertTriangle className="w-7 h-7 text-rose-600" />
+              مدیریت، پایش و طراحی فرم گزارش خطا
+            </h2>
+            <p className="text-xs sm:text-sm text-indigo-900/80 font-bold mt-1">
+              مشاهده گزارش‌های دریافتی، تحلیل RCA و ویرایش آنلاین سوالات فرم گزارش خطای بیمارستان
+            </p>
+          </div>
         </div>
-
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 active:scale-95 transition cursor-pointer ring-2 ring-amber-300/40 self-start md:self-auto"
-        >
-          <ArrowRight className="w-4 h-4 text-slate-950" />
-          <span>بازگشت به پنل ادمین</span>
-        </button>
       </div>
 
       {/* Main Tab Navigation */}

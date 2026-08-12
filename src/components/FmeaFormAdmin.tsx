@@ -22,6 +22,7 @@ import { DataAccessLayer } from '../services/dal';
 import { exportFmeaReportDocx } from '../utils/exportUtils';
 import { toPersianDigits } from '../utils/jalali';
 import { MedicalAiAnalyzerModal } from './MedicalAiAnalyzerModal';
+import { ConfirmModal } from './ConfirmModal';
 
 interface FmeaFormAdminProps {
   onBack?: () => void;
@@ -31,6 +32,9 @@ export const FmeaFormAdmin: React.FC<FmeaFormAdminProps> = ({ onBack }) => {
   const [subTab, setSubTab] = useState<'create' | 'archive'>('create');
   const [fmeaReports, setFmeaReports] = useState<FmeaReport[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  const ITEMS_PER_PAGE = 15;
 
   // AI Modal State
   const [aiModalOpen, setAiModalOpen] = useState(false);
@@ -149,14 +153,32 @@ export const FmeaFormAdmin: React.FC<FmeaFormAdminProps> = ({ onBack }) => {
     setSubTab('create');
   };
 
-  const handleDeleteReport = async (id: string) => {
-    if (window.confirm('آیا از حذف این آنالیز FMEA اطمینان دارید؟')) {
-      await DataAccessLayer.deleteFmeaReport(id);
-      if (editingId === id) {
-        resetForm();
-      }
-      loadReports();
-    }
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: async () => {},
+  });
+
+  const handleDeleteReport = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'حذف آنالیز FMEA',
+      message: 'آیا از حذف این آنالیز FMEA اطمینان دارید؟',
+      onConfirm: async () => {
+        await DataAccessLayer.deleteFmeaReport(id);
+        if (editingId === id) {
+          resetForm();
+        }
+        loadReports();
+      },
+    });
   };
 
   const handleAddItemRow = () => {
@@ -733,88 +755,135 @@ export const FmeaFormAdmin: React.FC<FmeaFormAdminProps> = ({ onBack }) => {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
-              {fmeaReports.map((report) => {
-                const maxRpn = Math.max(
-                  ...report.items.map((it) => it.rpn || it.severity * it.occurrence * it.detection),
-                  0
-                );
-                return (
-                  <div
-                    key={report.id}
-                    className="bg-slate-950 border-2 border-indigo-300/20 hover:border-emerald-400/50 p-5 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all shadow-lg"
-                  >
-                    <div className="space-y-1.5 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="px-2.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-black">
-                          {report.departmentOrProcess || 'فرایند عمومی'}
-                        </span>
-                        <span className="text-xs text-slate-400">
-                          تاریخ ارزیابی: {toPersianDigits(report.assessmentDate)}
-                        </span>
-                      </div>
+            <>
+              <div className="grid grid-cols-1 gap-4">
+                {fmeaReports
+                  .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                  .map((report) => {
+                    const maxRpn = Math.max(
+                      ...report.items.map((it) => it.rpn || it.severity * it.occurrence * it.detection),
+                      0
+                    );
+                    return (
+                      <div
+                        key={report.id}
+                        className="bg-slate-950 border-2 border-indigo-300/20 hover:border-emerald-400/50 p-5 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all shadow-lg text-right"
+                      >
+                        <div className="space-y-1.5 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="px-2.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-black">
+                              {report.departmentOrProcess || 'فرایند عمومی'}
+                            </span>
+                            <span className="text-xs text-slate-400">
+                              تاریخ ارزیابی: {toPersianDigits(report.assessmentDate)}
+                            </span>
+                          </div>
 
-                      <h4 className="text-base font-black text-white leading-snug">
-                        {report.title}
-                      </h4>
+                          <h4 className="text-base font-black text-white leading-snug">
+                            {report.title}
+                          </h4>
 
-                      <div className="flex items-center gap-4 text-xs text-indigo-200/80 pt-1 flex-wrap">
-                        {report.teamLeader && (
-                          <span>رهبر تیم: <strong className="text-white">{report.teamLeader}</strong></span>
-                        )}
-                        <span>تعداد خطاهای بررسی‌شده: <strong className="text-amber-300">{toPersianDigits(report.items.length)}</strong></span>
-                        <span>حداکثر RPN: <strong className="text-red-400">{toPersianDigits(maxRpn)}</strong></span>
+                          <div className="flex items-center gap-4 text-xs text-indigo-200/80 pt-1 flex-wrap">
+                            {report.teamLeader && (
+                              <span>رهبر تیم: <strong className="text-white">{report.teamLeader}</strong></span>
+                            )}
+                            <span>تعداد خطاهای بررسی‌شده: <strong className="text-amber-300">{toPersianDigits(report.items.length)}</strong></span>
+                            <span>حداکثر RPN: <strong className="text-red-400">{toPersianDigits(maxRpn)}</strong></span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end border-t md:border-t-0 pt-3 md:pt-0 border-indigo-200/10">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAiModalData(report);
+                              setAiModalTitle(`تحلیل FMEA: ${report.title}`);
+                              setAiModalOpen(true);
+                            }}
+                            className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white text-xs font-black rounded-xl transition cursor-pointer shadow-md border border-purple-300/40"
+                            title="تحلیل هوشمند FMEA با استناد به کتاب‌های مرجع"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                            <span>تحلیل با AI</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => exportFmeaReportDocx(report)}
+                            className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl transition cursor-pointer shadow-md"
+                            title="دانلود خروجی Word راست‌گرد"
+                          >
+                            <Download className="w-4 h-4" />
+                            <span>دانلود Word</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleEditReport(report)}
+                            className="flex items-center gap-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition cursor-pointer"
+                            title="ویرایش"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                            <span>ویرایش</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteReport(report.id)}
+                            className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-xl transition cursor-pointer"
+                            title="حذف"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
+                    );
+                  })}
+              </div>
+
+              {/* Pagination Controls */}
+              {Math.ceil(fmeaReports.length / ITEMS_PER_PAGE) > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 mt-6 border-t border-slate-800 bg-slate-950 p-4 rounded-3xl shadow-sm text-white dir-rtl">
+                  <span className="text-xs font-extrabold text-slate-300">
+                    نمایش صفحه {toPersianDigits(currentPage)} از {toPersianDigits(Math.ceil(fmeaReports.length / ITEMS_PER_PAGE))} (مجموع {toPersianDigits(fmeaReports.length)} آنالیز FMEA - هر صفحه ۱۵ مورد)
+                  </span>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-black disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer border border-slate-700"
+                    >
+                      صفحه قبل
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.ceil(fmeaReports.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).map((p) => (
+                        <button
+                          key={p}
+                          onClick={() => setCurrentPage(p)}
+                          className={`w-9 h-9 rounded-xl text-xs font-black transition cursor-pointer ${
+                            currentPage === p
+                              ? 'bg-emerald-600 text-white shadow-md scale-105'
+                              : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                          }`}
+                        >
+                          {toPersianDigits(p)}
+                        </button>
+                      ))}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end border-t md:border-t-0 pt-3 md:pt-0 border-indigo-200/10">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAiModalData(report);
-                          setAiModalTitle(`تحلیل FMEA: ${report.title}`);
-                          setAiModalOpen(true);
-                        }}
-                        className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white text-xs font-black rounded-xl transition cursor-pointer shadow-md border border-purple-300/40"
-                        title="تحلیل هوشمند FMEA با استناد به کتاب‌های مرجع"
-                      >
-                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                        <span>تحلیل با AI</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => exportFmeaReportDocx(report)}
-                        className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl transition cursor-pointer shadow-md"
-                        title="دانلود خروجی Word راست‌گرد"
-                      >
-                        <Download className="w-4 h-4" />
-                        <span>دانلود Word</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleEditReport(report)}
-                        className="flex items-center gap-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition cursor-pointer"
-                        title="ویرایش"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                        <span>ویرایش</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteReport(report.id)}
-                        className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-xl transition cursor-pointer"
-                        title="حذف"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.min(p + 1, Math.ceil(fmeaReports.length / ITEMS_PER_PAGE)))}
+                      disabled={currentPage === Math.ceil(fmeaReports.length / ITEMS_PER_PAGE)}
+                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-black disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer border border-slate-700"
+                    >
+                      صفحه بعد
+                    </button>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
@@ -826,6 +895,15 @@ export const FmeaFormAdmin: React.FC<FmeaFormAdminProps> = ({ onBack }) => {
         contextType="FMEA"
         title={aiModalTitle}
         data={aiModalData}
+      />
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
       />
     </div>
   );
