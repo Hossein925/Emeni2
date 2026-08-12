@@ -125,7 +125,7 @@ export default function App() {
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
     setOriginalAdminUser(null);
-    if (user.role === 'super_admin') {
+    if (user.role === 'super_admin' || user.role === 'patient_safety_officer') {
       setCurrentView('admin_dashboard');
     } else {
       setCurrentView('dept_dashboard');
@@ -186,7 +186,7 @@ export default function App() {
               if (tile === 'quizzes') setCurrentView('public_quizzes');
             }}
             onEditTicker={() => {
-              if (currentUser?.role === 'super_admin') {
+              if (currentUser?.role === 'super_admin' || currentUser?.role === 'patient_safety_officer') {
                 setCurrentView('admin_ticker');
               } else {
                 setIsAuthModalOpen(true);
