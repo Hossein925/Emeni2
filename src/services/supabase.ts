@@ -1,20 +1,45 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase Client Initialization
-const getSupabaseConfig = () => {
+export const getSupabaseConfig = () => {
   const url = (typeof window !== 'undefined' && (window as any).__SUPABASE_URL__) ||
+    (typeof window !== 'undefined' && localStorage.getItem('custom_supabase_url')) ||
     import.meta.env.VITE_SUPABASE_URL ||
     'https://xyzcompany.supabase.co';
   const key = (typeof window !== 'undefined' && (window as any).__SUPABASE_ANON_KEY__) ||
+    (typeof window !== 'undefined' && localStorage.getItem('custom_supabase_anon_key')) ||
     import.meta.env.VITE_SUPABASE_ANON_KEY ||
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummykey';
   return { url, key };
 };
 
-const { url: supabaseUrl, key: supabaseKey } = getSupabaseConfig();
-export const supabase = createClient(supabaseUrl, supabaseKey);
+let { url: supabaseUrl, key: supabaseKey } = getSupabaseConfig();
+export let supabase = createClient(supabaseUrl, supabaseKey);
+
+export const reinitializeSupabase = (url: string, key: string) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('custom_supabase_url', url);
+    localStorage.setItem('custom_supabase_anon_key', key);
+  }
+  supabaseUrl = url;
+  supabaseKey = key;
+  supabase = createClient(url, key);
+};
+
+export const clearCustomSupabaseConfig = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('custom_supabase_url');
+    localStorage.removeItem('custom_supabase_anon_key');
+  }
+  const config = getSupabaseConfig();
+  supabaseUrl = config.url;
+  supabaseKey = config.key;
+  supabase = createClient(config.url, config.key);
+};
+
 export const isSupabaseConfigured = (): boolean => {
-  return !!supabaseUrl && supabaseUrl !== 'https://xyzcompany.supabase.co';
+  const current = getSupabaseConfig();
+  return !!current.url && current.url !== 'https://xyzcompany.supabase.co' && current.key !== 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummykey';
 };
 
 /**
