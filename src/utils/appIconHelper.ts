@@ -1,3 +1,5 @@
+import { DataAccessLayer } from '../services/dal';
+
 // Helper utility for managing and dynamically applying App Icons & PWA Favicons
 
 export interface ProcessedAppIcons {
@@ -80,9 +82,7 @@ export function applyAppIcon(iconDataUrl: string): void {
 
     // 4. Save to LocalStorage & Supabase DB asynchronously
     localStorage.setItem(STORAGE_KEY, iconDataUrl);
-    import('../services/dal').then(({ DataAccessLayer }) => {
-      DataAccessLayer.saveAppSetting('app_icon', iconDataUrl).catch(() => {});
-    });
+    DataAccessLayer.saveAppSetting('app_icon', iconDataUrl).catch(() => {});
 
     // 5. Dispatch Event for real-time reactivity in open windows
     window.dispatchEvent(new CustomEvent('app_icon_changed', { detail: iconDataUrl }));
@@ -102,13 +102,11 @@ export function loadStoredAppIcon(): string | null {
   }
 
   // Also check Supabase DB in background
-  import('../services/dal').then(({ DataAccessLayer }) => {
-    DataAccessLayer.getAppSetting('app_icon').then((dbIcon) => {
-      if (dbIcon && dbIcon !== stored) {
-        applyAppIcon(dbIcon);
-      }
-    }).catch(() => {});
-  });
+  DataAccessLayer.getAppSetting('app_icon').then((dbIcon) => {
+    if (dbIcon && dbIcon !== stored) {
+      applyAppIcon(dbIcon);
+    }
+  }).catch(() => {});
 
   return stored;
 }
