@@ -11,7 +11,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { Checklist, ChecklistField } from '../types';
-import { DataAccessLayer } from '../services/dal';
+import { DataAccessLayer, subscribeToDALChanges } from '../services/dal';
 import { ErrorReportFormBuilder } from './ErrorReportFormBuilder';
 import { ConfirmModal } from './ConfirmModal';
 
@@ -36,11 +36,17 @@ export const ChecklistsAdmin: React.FC<ChecklistsAdminProps> = ({ onBack }) => {
     if (selectedTile) {
       loadChecklists();
     }
+    const unsubscribe = subscribeToDALChanges(() => {
+      if (selectedTile) {
+        loadChecklists(true);
+      }
+    });
+    return () => unsubscribe();
   }, [selectedTile]);
 
-  const loadChecklists = async () => {
+  const loadChecklists = async (isBackground = false) => {
     if (!selectedTile) return;
-    setLoading(true);
+    if (!isBackground) setLoading(true);
     const data = await DataAccessLayer.getChecklists(selectedTile);
     setChecklists(data);
     setLoading(false);

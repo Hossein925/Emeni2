@@ -18,7 +18,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { SafetyMeeting, MeetingResolution } from '../types';
-import { DataAccessLayer } from '../services/dal';
+import { DataAccessLayer, subscribeToDALChanges } from '../services/dal';
 import { downloadMeetingMinutesDocx } from '../utils/exportUtils';
 import { toPersianDigits } from '../utils/jalali';
 import { RcaFormAdmin } from './RcaFormAdmin';
@@ -75,10 +75,14 @@ export const SafetyMeetingsAdmin: React.FC<SafetyMeetingsAdminProps> = ({ onBack
 
   useEffect(() => {
     loadMeetings();
+    const unsubscribe = subscribeToDALChanges(() => {
+      loadMeetings(true);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const loadMeetings = async () => {
-    setLoading(true);
+  const loadMeetings = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     const data = await DataAccessLayer.getMeetings();
     setMeetings(data);
     setLoading(false);

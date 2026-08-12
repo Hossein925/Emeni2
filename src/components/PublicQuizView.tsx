@@ -18,7 +18,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { QuizExam, QuizQuestion, Department, QuizSubmission, StaffMember } from '../types';
-import { DataAccessLayer } from '../services/dal';
+import { DataAccessLayer, subscribeToDALChanges } from '../services/dal';
 import { toPersianDigits } from '../utils/jalali';
 
 interface PublicQuizViewProps {
@@ -82,6 +82,10 @@ export const PublicQuizView: React.FC<PublicQuizViewProps> = ({ onBack }) => {
 
   useEffect(() => {
     loadData();
+    const unsubscribe = subscribeToDALChanges(() => {
+      loadData(true);
+    });
+    return () => unsubscribe();
   }, []);
 
   // Timer countdown

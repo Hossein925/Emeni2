@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, FileText, Calendar, Lightbulb, AlertTriangle, X } from 'lucide-react';
 import { SafetyScenario } from '../types';
-import { DataAccessLayer } from '../services/dal';
+import { DataAccessLayer, subscribeToDALChanges } from '../services/dal';
 
 interface PublicScenariosViewProps {
   onBack: () => void;
@@ -14,10 +14,14 @@ export const PublicScenariosView: React.FC<PublicScenariosViewProps> = ({ onBack
 
   useEffect(() => {
     loadScenarios();
+    const unsubscribe = subscribeToDALChanges(() => {
+      loadScenarios(true);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const loadScenarios = async () => {
-    setLoading(true);
+  const loadScenarios = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     const data = await DataAccessLayer.getScenarios();
     setScenarios(data);
     setLoading(false);

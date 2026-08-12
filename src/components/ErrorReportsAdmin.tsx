@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, AlertTriangle, Building2, Calendar, Eye, CheckCircle, Clock, X, Sparkles, Edit3, ListFilter } from 'lucide-react';
 import { ErrorReport, Department } from '../types';
-import { DataAccessLayer } from '../services/dal';
+import { DataAccessLayer, subscribeToDALChanges } from '../services/dal';
 import { MedicalAiAnalyzerModal } from './MedicalAiAnalyzerModal';
 import { ErrorReportFormBuilder } from './ErrorReportFormBuilder';
 
@@ -24,10 +24,14 @@ export const ErrorReportsAdmin: React.FC<ErrorReportsAdminProps> = ({ onBack }) 
 
   useEffect(() => {
     loadReports();
+    const unsubscribe = subscribeToDALChanges(() => {
+      loadReports(true);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const loadReports = async () => {
-    setLoading(true);
+  const loadReports = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     const depts = await DataAccessLayer.getDepartments();
     const data = await DataAccessLayer.getErrorReports();
     setDepartments(depts);

@@ -35,7 +35,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { EducationCategory, EducationTopic } from '../types';
-import { DataAccessLayer } from '../services/dal';
+import { DataAccessLayer, subscribeToDALChanges } from '../services/dal';
 import { RichTextEditor } from './RichTextEditor';
 import { ConfirmModal } from './ConfirmModal';
 
@@ -110,10 +110,14 @@ export const EducationAdmin: React.FC<EducationAdminProps> = ({ onBack }) => {
 
   useEffect(() => {
     loadAll();
+    const unsubscribe = subscribeToDALChanges(() => {
+      loadAll(true);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const loadAll = async () => {
-    setLoading(true);
+  const loadAll = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     const [catData, topicData] = await Promise.all([
       DataAccessLayer.getEducationCategories(),
       DataAccessLayer.getEducationTopics(),

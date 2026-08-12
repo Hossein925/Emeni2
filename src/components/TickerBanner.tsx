@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Megaphone, Pause, Play, Edit3 } from 'lucide-react';
 import { Announcement, User } from '../types';
-import { DataAccessLayer } from '../services/dal';
+import { DataAccessLayer, subscribeToDALChanges } from '../services/dal';
 
 interface TickerBannerProps {
   currentUser?: User | null;
@@ -67,6 +67,10 @@ export const TickerBanner: React.FC<TickerBannerProps> = ({ currentUser, onEditT
 
   useEffect(() => {
     loadAnnouncements();
+    const unsubscribe = subscribeToDALChanges(() => {
+      loadAnnouncements();
+    });
+    return () => unsubscribe();
   }, []);
 
   const loadAnnouncements = async () => {

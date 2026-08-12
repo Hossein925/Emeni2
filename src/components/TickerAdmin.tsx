@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Megaphone, Plus, Trash2, Edit2, CheckCircle2, Volume2, Sparkles, AlertCircle } from 'lucide-react';
 import { Announcement } from '../types';
-import { DataAccessLayer } from '../services/dal';
+import { DataAccessLayer, subscribeToDALChanges } from '../services/dal';
 import { RichTextEditor } from './RichTextEditor';
 import { ConfirmModal } from './ConfirmModal';
 
@@ -20,6 +20,10 @@ export const TickerAdmin: React.FC<TickerAdminProps> = ({ onBack }) => {
 
   useEffect(() => {
     loadAnnouncements();
+    const unsubscribe = subscribeToDALChanges(() => {
+      loadAnnouncements();
+    });
+    return () => unsubscribe();
   }, []);
 
   const loadAnnouncements = async () => {

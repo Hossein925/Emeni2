@@ -17,6 +17,11 @@ import {
   Loader2,
   FileVideo,
   FileImage,
+  Palette,
+  Type,
+  Highlighter,
+  Unlink,
+  ExternalLink,
 } from 'lucide-react';
 import { EducationalContentRenderer } from './EducationalContentRenderer';
 
@@ -25,8 +30,40 @@ interface RichTextEditorProps {
   onChange: (html: string) => void;
 }
 
+const PRESET_TEXT_COLORS = [
+  { name: 'سفید', value: '#ffffff', bg: 'bg-white' },
+  { name: 'مشکی/تیره', value: '#1e293b', bg: 'bg-slate-800' },
+  { name: 'قرمز هشداری', value: '#ef4444', bg: 'bg-red-500' },
+  { name: 'کهربایی / طلایی', value: '#f59e0b', bg: 'bg-amber-500' },
+  { name: 'سبز درخشان', value: '#10b981', bg: 'bg-emerald-500' },
+  { name: 'فیروزه‌ای', value: '#06b6d4', bg: 'bg-cyan-500' },
+  { name: 'آبی روشن', value: '#38bdf8', bg: 'bg-sky-400' },
+  { name: 'آبی تیره', value: '#2563eb', bg: 'bg-blue-600' },
+  { name: 'بنفش', value: '#a855f7', bg: 'bg-purple-500' },
+  { name: 'صورتی', value: '#f43f5e', bg: 'bg-rose-500' },
+];
+
+const PRESET_HIGHLIGHT_COLORS = [
+  { name: 'بدون هایلایت', value: 'transparent', bg: 'bg-slate-700' },
+  { name: 'زرد', value: '#fef08a', bg: 'bg-yellow-200' },
+  { name: 'سبز', value: '#bbf7d0', bg: 'bg-emerald-200' },
+  { name: 'آبی', value: '#bae6fd', bg: 'bg-sky-200' },
+  { name: 'صورتی', value: '#fbcfe8', bg: 'bg-pink-200' },
+  { name: 'نارنجی', value: '#fed7aa', bg: 'bg-orange-200' },
+];
+
 export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
   const [isPreview, setIsPreview] = useState(false);
+
+  // Link Modal State
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkText, setLinkText] = useState('');
+  const [openInNewTab, setOpenInNewTab] = useState(true);
+
+  // Popover States
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showHighlightPicker, setShowHighlightPicker] = useState(false);
 
   // Image Modal State
   const [showImageModal, setShowImageModal] = useState(false);
@@ -48,7 +85,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
   const editorRef = useRef<HTMLDivElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
 
-  // Sync contentEditable innerHTML ONLY when value changes externally to prevent resetting caret position
+  // Sync contentEditable innerHTML ONLY when value changes externally
   useEffect(() => {
     if (editorRef.current && editorRef.current.innerHTML !== value) {
       editorRef.current.innerHTML = value || '';
@@ -67,7 +104,108 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
     }
   };
 
-  // Helper to fix double-encoded URLs (e.g. %2520 -> %20)
+  const restoreCaretPosition = () => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    if (savedRangeRef.current) {
+      const sel = window.getSelection();
+      if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(savedRangeRef.current);
+      }
+    }
+  };
+
+  const formatDoc = (cmd: string, val: string = '') => {
+    restoreCaretPosition();
+    document.execCommand(cmd, false, val);
+    if (editorRef.current) {
+      onChange(editorRef.current.innerHTML);
+    }
+  };
+
+  const applyTextColor = (colorVal: string) => {
+    formatDoc('foreColor', colorVal);
+    setShowColorPicker(false);
+  };
+
+  const applyHighlightColor = (colorVal: string) => {
+    formatDoc('hiliteColor', colorVal);
+    setShowHighlightPicker(false);
+  };
+
+  // Open Link Modal
+  const openLinkModal = () => {
+    saveCaretPosition();
+    let selectedTxt = '';
+    const sel = window.getSelection();
+    if (sel && sel.toString().trim()) {
+      selectedTxt = sel.toString().trim();
+    } else if (savedRangeRef.current) {
+      selectedTxt = savedRangeRef.current.toString().trim();
+    }
+    setLinkText(selectedTxt);
+    setLinkUrl('');
+    setShowLinkModal(true);
+  };
+
+  // Apply Link on Selection or Insert New Link
+  const handleApplyLink = () => {
+    if (!linkUrl.trim()) {
+      alert('لطفاً آدرس اینترنتی (URL) لینک را وارد نمایید.');
+      return;
+    }
+
+    let finalUrl = linkUrl.trim();
+    if (
+      !/^https?:\/\//i.test(finalUrl) &&
+      !finalUrl.startsWith('mailto:') &&
+      !finalUrl.startsWith('tel:') &&
+      !finalUrl.startsWith('#')
+    ) {
+      finalUrl = 'https://' + finalUrl;
+    }
+
+    if (!editorRef.current) return;
+    restoreCaretPosition();
+
+    const sel = window.getSelection();
+    const hasSelection = sel && !sel.isCollapsed && sel.toString().trim().length > 0;
+
+    if (hasSelection) {
+      document.execCommand('createLink', false, finalUrl);
+      const links = editorRef.current.querySelectorAll('a');
+      links.forEach((a) => {
+        if (a.getAttribute('href') === finalUrl) {
+          if (openInNewTab) {
+            a.setAttribute('target', '_blank');
+            a.setAttribute('rel', 'noopener noreferrer');
+          }
+          a.style.color = '#38bdf8';
+          a.style.textDecoration = 'underline';
+          a.style.fontWeight = 'bold';
+          a.className = 'text-cyan-400 underline font-bold hover:text-cyan-300';
+        }
+      });
+    } else {
+      const displayText = linkText.trim() || finalUrl;
+      const targetAttr = openInNewTab ? 'target="_blank" rel="noopener noreferrer"' : '';
+      const linkHtml = `<a href="${finalUrl}" ${targetAttr} style="color: #38bdf8; text-decoration: underline; font-weight: bold;" class="text-cyan-400 underline font-bold hover:text-cyan-300">${displayText}</a>&nbsp;`;
+      insertHtmlToEditor(linkHtml);
+    }
+
+    onChange(editorRef.current.innerHTML);
+    setShowLinkModal(false);
+    setLinkUrl('');
+    setLinkText('');
+  };
+
+  const handleRemoveLink = () => {
+    formatDoc('unlink');
+    setShowLinkModal(false);
+  };
+
+  // Helper to fix double-encoded URLs
   const cleanVideoUrl = (rawUrl: string): string => {
     if (!rawUrl) return '';
     let cleaned = rawUrl.trim();
@@ -76,21 +214,19 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
         cleaned = decodeURIComponent(cleaned);
       }
     } catch (e) {
-      // ignore decode error
+      // ignore
     }
     return cleaned;
   };
 
-  // Reliable HTML insertion helper into contentEditable at exact cursor position
+  // Reliable HTML insertion helper
   const insertHtmlToEditor = (htmlStr: string) => {
     if (!editorRef.current) return;
-
     editorRef.current.focus();
 
     const selection = window.getSelection();
     let targetRange: Range | null = null;
 
-    // Check saved range or active selection inside editorRef
     if (
       savedRangeRef.current &&
       editorRef.current.contains(savedRangeRef.current.commonAncestorContainer)
@@ -128,19 +264,11 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
         selection.addRange(targetRange);
       }
     } else {
-      // Append at bottom if no active range
       editorRef.current.innerHTML += htmlStr;
     }
 
     savedRangeRef.current = null;
     onChange(editorRef.current.innerHTML);
-  };
-
-  const formatDoc = (cmd: string, val: string = '') => {
-    document.execCommand(cmd, false, val);
-    if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
-    }
   };
 
   // Image File Upload Handler
@@ -188,7 +316,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
     `;
     insertHtmlToEditor(imgHtml);
 
-    // Reset Image Modal State
     setImageUrl('');
     setImageFile(null);
     setImagePreviewUrl('');
@@ -250,7 +377,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
 
     insertHtmlToEditor(videoHtml);
 
-    // Reset Video Modal State
     setVideoUrl('');
     setVideoTitle('');
     setVideoFile(null);
@@ -263,6 +389,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
       {/* Editor Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-950 border-b border-slate-800">
         <div className="flex flex-wrap items-center gap-1">
+          {/* Bold */}
           <button
             type="button"
             onClick={() => formatDoc('bold')}
@@ -272,6 +399,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
             <Bold className="w-4 h-4" />
           </button>
 
+          {/* Italic */}
           <button
             type="button"
             onClick={() => formatDoc('italic')}
@@ -283,6 +411,127 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
 
           <div className="h-4 w-px bg-slate-800 mx-1" />
 
+          {/* Font Size Selector */}
+          <div className="flex items-center gap-1 border border-slate-700/80 rounded-xl px-2 py-1 bg-slate-900">
+            <Type className="w-3.5 h-3.5 text-slate-400" />
+            <select
+              onChange={(e) => {
+                if (e.target.value) {
+                  saveCaretPosition();
+                  formatDoc('fontSize', e.target.value);
+                  e.target.value = '';
+                }
+              }}
+              title="تغییر و افزایش اندازه متن"
+              className="bg-transparent text-slate-200 text-xs font-bold focus:outline-none cursor-pointer"
+            >
+              <option value="" className="bg-slate-900 text-slate-300">اندازه قلم...</option>
+              <option value="1" className="bg-slate-900 text-slate-200">خیلی کوچک (10px)</option>
+              <option value="2" className="bg-slate-900 text-slate-200">کوچک (12px)</option>
+              <option value="3" className="bg-slate-900 text-slate-200">عادی (14px)</option>
+              <option value="4" className="bg-slate-900 text-slate-200">متوسط (16px)</option>
+              <option value="5" className="bg-slate-900 text-slate-200">بزرگ (18px)</option>
+              <option value="6" className="bg-slate-900 text-slate-200">خیلی بزرگ (24px)</option>
+              <option value="7" className="bg-slate-900 text-slate-200">تیتر درشت (36px)</option>
+            </select>
+          </div>
+
+          {/* Text Color Picker Popover */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                saveCaretPosition();
+                setShowColorPicker(!showColorPicker);
+                setShowHighlightPicker(false);
+              }}
+              title="تغییر رنگ متن"
+              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer flex items-center gap-1"
+            >
+              <Palette className="w-4 h-4 text-amber-400" />
+            </button>
+
+            {showColorPicker && (
+              <div className="absolute top-full right-0 mt-2 z-30 p-3 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-56 text-right space-y-2">
+                <div className="text-[11px] font-bold text-slate-300 border-b border-slate-800 pb-1">
+                  انتخاب رنگ نوشته:
+                </div>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {PRESET_TEXT_COLORS.map((c) => (
+                    <button
+                      key={c.value}
+                      type="button"
+                      onClick={() => applyTextColor(c.value)}
+                      title={c.name}
+                      className={`w-7 h-7 rounded-lg border border-slate-600 ${c.bg} hover:scale-110 transition cursor-pointer`}
+                    />
+                  ))}
+                </div>
+                <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
+                  <span className="text-[10px] text-slate-400 font-bold">رنگ سفارشی:</span>
+                  <input
+                    type="color"
+                    onChange={(e) => applyTextColor(e.target.value)}
+                    className="w-7 h-7 rounded-lg bg-transparent border-0 cursor-pointer"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Text Highlight Color Popover */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                saveCaretPosition();
+                setShowHighlightPicker(!showHighlightPicker);
+                setShowColorPicker(false);
+              }}
+              title="هایلایت و رنگ پس‌زمینه متن"
+              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer flex items-center gap-1"
+            >
+              <Highlighter className="w-4 h-4 text-yellow-300" />
+            </button>
+
+            {showHighlightPicker && (
+              <div className="absolute top-full right-0 mt-2 z-30 p-3 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-56 text-right space-y-2">
+                <div className="text-[11px] font-bold text-slate-300 border-b border-slate-800 pb-1">
+                  هایلایت پس‌زمینه متن:
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {PRESET_HIGHLIGHT_COLORS.map((h) => (
+                    <button
+                      key={h.value}
+                      type="button"
+                      onClick={() => applyHighlightColor(h.value)}
+                      className="p-1.5 rounded-lg border border-slate-700 text-[10px] font-bold text-slate-900 bg-slate-200 hover:scale-105 transition cursor-pointer flex items-center justify-center gap-1"
+                      style={{ backgroundColor: h.value === 'transparent' ? '#334155' : h.value, color: h.value === 'transparent' ? '#fff' : '#000' }}
+                    >
+                      {h.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="h-4 w-px bg-slate-800 mx-1" />
+
+          {/* Hyperlink Link Button */}
+          <button
+            type="button"
+            onClick={openLinkModal}
+            title="اعمال لینک روی نوشته انتخابی (Hyperlink)"
+            className="p-2 rounded-xl text-slate-300 hover:text-cyan-300 hover:bg-slate-800 transition cursor-pointer flex items-center gap-1.5 bg-cyan-950/40 border border-cyan-800/40 text-cyan-300"
+          >
+            <LinkIcon className="w-4 h-4 text-cyan-400" />
+            <span className="text-xs font-bold hidden sm:inline">لینک‌گذاری</span>
+          </button>
+
+          <div className="h-4 w-px bg-slate-800 mx-1" />
+
+          {/* Headings */}
           <button
             type="button"
             onClick={() => formatDoc('formatBlock', '<h2>')}
@@ -303,6 +552,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
 
           <div className="h-4 w-px bg-slate-800 mx-1" />
 
+          {/* Unordered List */}
           <button
             type="button"
             onClick={() => formatDoc('insertUnorderedList')}
@@ -312,6 +562,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
             <List className="w-4 h-4" />
           </button>
 
+          {/* Ordered List */}
           <button
             type="button"
             onClick={() => formatDoc('insertOrderedList')}
@@ -321,6 +572,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
             <ListOrdered className="w-4 h-4" />
           </button>
 
+          {/* Blockquote */}
           <button
             type="button"
             onClick={() => formatDoc('formatBlock', '<blockquote>')}
@@ -343,7 +595,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
             className="p-2 rounded-xl bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-700/60 text-cyan-300 hover:text-cyan-100 transition flex items-center gap-1.5 text-xs font-bold cursor-pointer"
           >
             <ImageIcon className="w-4 h-4 text-cyan-400" />
-            <span>+ افزودن عکس</span>
+            <span>+ عکس</span>
           </button>
 
           {/* Add Video Button */}
@@ -357,7 +609,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
             className="p-2 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700/60 text-indigo-300 hover:text-indigo-100 transition flex items-center gap-1.5 text-xs font-bold cursor-pointer"
           >
             <Video className="w-4 h-4 text-indigo-400" />
-            <span>+ افزودن فیلم (با پلیر قوی)</span>
+            <span>+ فیلم</span>
           </button>
         </div>
 
@@ -370,12 +622,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
           {isPreview ? (
             <>
               <Edit3 className="w-3.5 h-3.5 text-amber-400" />
-              <span>بازگشت به ویرایشگر</span>
+              <span>ویرایشگر</span>
             </>
           ) : (
             <>
               <Eye className="w-3.5 h-3.5 text-emerald-400" />
-              <span>پیش‌نمایش نهایی</span>
+              <span>پیش‌نمایش</span>
             </>
           )}
         </button>
@@ -402,6 +654,99 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
           onBlur={saveCaretPosition}
           className="p-4 sm:p-6 text-slate-100 text-sm leading-relaxed focus:outline-none min-h-[260px] max-h-[500px] overflow-y-auto text-right font-medium"
         />
+      )}
+
+      {/* Link Insertion Modal */}
+      {showLinkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn">
+          <div className="bg-slate-900 border-2 border-cyan-500/50 rounded-3xl p-6 max-w-md w-full space-y-4 text-right shadow-2xl text-white">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h4 className="text-base font-black text-white flex items-center gap-2">
+                <LinkIcon className="w-5 h-5 text-cyan-400" />
+                افزودن و تنظیم لینک روی متن (Hyperlink)
+              </h4>
+              <button
+                type="button"
+                onClick={() => setShowLinkModal(false)}
+                className="p-1 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                متن نمایش‌داده‌شده:
+              </label>
+              <input
+                type="text"
+                placeholder="مثلاً: وب‌سایت سازمان نظام پزشکی"
+                value={linkText}
+                onChange={(e) => setLinkText(e.target.value)}
+                className="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-2xl text-xs text-white focus:outline-none focus:border-cyan-500 font-bold"
+              />
+              <p className="text-[10px] text-slate-400 mt-1">
+                اگر متن متناظر را قبل از زدن دکمه لینک انتخاب کرده باشید، لینک مستقیماً روی همان نوشته اعمال می‌شود.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                آدرس اینترنتی لینک (URL):
+              </label>
+              <input
+                type="text"
+                placeholder="https://example.com"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                className="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-2xl text-xs text-white focus:outline-none focus:border-cyan-500 font-mono"
+                dir="ltr"
+              />
+            </div>
+
+            <label className="flex items-center gap-2 cursor-pointer pt-1">
+              <input
+                type="checkbox"
+                checked={openInNewTab}
+                onChange={(e) => setOpenInNewTab(e.target.checked)}
+                className="w-4 h-4 rounded text-cyan-600 focus:ring-cyan-500 bg-slate-950 border-slate-700"
+              />
+              <span className="text-xs text-slate-300 font-bold flex items-center gap-1">
+                <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
+                باز شدن لینک در زبانه (تب) جدید مرورگر
+              </span>
+            </label>
+
+            <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={handleRemoveLink}
+                className="px-3 py-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-800/60 text-xs text-rose-300 font-bold cursor-pointer flex items-center gap-1"
+                title="حذف لینک از متن انتخاب شده"
+              >
+                <Unlink className="w-3.5 h-3.5" />
+                <span>حذف لینک</span>
+              </button>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLinkModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-bold cursor-pointer"
+                >
+                  انصراف
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApplyLink}
+                  className="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-xs text-white font-black cursor-pointer shadow-lg"
+                >
+                  تایید و اعمال لینک
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Insert Image Modal */}
@@ -555,7 +900,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
               </button>
             </div>
 
-            {/* Video Title Input (Optional) */}
+            {/* Video Title Input */}
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1">
                 عنوان ویدیو (جهت نمایش بالای پلیر)
@@ -684,3 +1029,4 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
     </div>
   );
 };
+

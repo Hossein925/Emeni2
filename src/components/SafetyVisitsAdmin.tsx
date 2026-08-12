@@ -10,7 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { Department, SafetyVisit } from '../types';
-import { DataAccessLayer } from '../services/dal';
+import { DataAccessLayer, subscribeToDALChanges } from '../services/dal';
 
 interface SafetyVisitsAdminProps {
   onBack: () => void;
@@ -33,10 +33,17 @@ export const SafetyVisitsAdmin: React.FC<SafetyVisitsAdminProps> = ({ onBack }) 
 
   useEffect(() => {
     loadDepartments();
-  }, []);
+    const unsubscribe = subscribeToDALChanges(() => {
+      loadDepartments(true);
+      if (selectedDept) {
+        DataAccessLayer.getSafetyVisits(selectedDept.id).then((deptVisits) => setVisits(deptVisits));
+      }
+    });
+    return () => unsubscribe();
+  }, [selectedDept]);
 
-  const loadDepartments = async () => {
-    setLoading(true);
+  const loadDepartments = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     const depts = await DataAccessLayer.getDepartments();
     setDepartments(depts);
     setLoading(false);

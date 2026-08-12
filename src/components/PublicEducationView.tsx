@@ -32,7 +32,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { EducationCategory, EducationTopic } from '../types';
-import { DataAccessLayer } from '../services/dal';
+import { DataAccessLayer, subscribeToDALChanges } from '../services/dal';
 
 interface PublicEducationViewProps {
   onBack: () => void;
@@ -98,10 +98,14 @@ export const PublicEducationView: React.FC<PublicEducationViewProps> = ({ onBack
 
   useEffect(() => {
     loadData();
+    const unsubscribe = subscribeToDALChanges(() => {
+      loadData(true);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     const [catData, topicData] = await Promise.all([
       DataAccessLayer.getEducationCategories(),
       DataAccessLayer.getEducationTopics(),

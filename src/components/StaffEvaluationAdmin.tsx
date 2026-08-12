@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { Department, Checklist, StaffEvaluation, QuizExam, QuizQuestion, QuizSubmission, StaffMember } from '../types';
-import { DataAccessLayer } from '../services/dal';
+import { DataAccessLayer, subscribeToDALChanges } from '../services/dal';
 import { JALALI_MONTHS, toPersianDigits, getCurrentJalaliYear, getCurrentJalaliMonth } from '../utils/jalali';
 import { downloadStaffSafetyReportCardDocx } from '../utils/exportUtils';
 import { ConfirmModal } from './ConfirmModal';
@@ -116,10 +116,14 @@ export const StaffEvaluationAdmin: React.FC<StaffEvaluationAdminProps> = ({ onBa
 
   useEffect(() => {
     loadData();
+    const unsubscribe = subscribeToDALChanges(() => {
+      loadData(true);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     const depts = await DataAccessLayer.getDepartments();
     const chks = await DataAccessLayer.getChecklists('staff_eval');
     const evals = await DataAccessLayer.getEvaluations();

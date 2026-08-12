@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, CheckCircle2, Clock, UserCheck, Filter, ShieldAlert, Sparkles, Building2, Layers } from 'lucide-react';
-import { DataAccessLayer } from '../services/dal';
+import { DataAccessLayer, subscribeToDALChanges } from '../services/dal';
 import { toPersianDigits } from '../utils/jalali';
 
 interface CombinedResolution {
@@ -30,14 +30,18 @@ export const PublicResolutionsView: React.FC<PublicResolutionsViewProps> = ({ on
 
   useEffect(() => {
     loadAllPublicResolutions();
+    const unsubscribe = subscribeToDALChanges(() => {
+      loadAllPublicResolutions(true);
+    });
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedFilter]);
 
-  const loadAllPublicResolutions = async () => {
-    setLoading(true);
+  const loadAllPublicResolutions = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     const combined: CombinedResolution[] = [];
 
     // 1. Committee Meetings Resolutions

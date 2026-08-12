@@ -33,7 +33,7 @@ import {
   StaffEvaluation,
   QuizSubmission,
 } from '../types';
-import { DataAccessLayer } from '../services/dal';
+import { DataAccessLayer, subscribeToDALChanges } from '../services/dal';
 import { JALALI_MONTHS, toPersianDigits, getCurrentJalaliYear, getCurrentJalaliMonth } from '../utils/jalali';
 import { exportToExcel } from '../utils/exportUtils';
 import { CLINICAL_INDICATORS_MATRIX, CLINICAL_DEPARTMENTS, ClinicalIndicatorItem } from '../data/indicators';
@@ -83,10 +83,14 @@ export const SafetyIndicatorsAdmin: React.FC<SafetyIndicatorsAdminProps> = ({ on
 
   useEffect(() => {
     loadData();
+    const unsubscribe = subscribeToDALChanges(() => {
+      loadData(true);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     const depts = await DataAccessLayer.getDepartments();
     const defs = await DataAccessLayer.getIndicatorDefinitions();
     const recs = await DataAccessLayer.getIndicatorRecords();

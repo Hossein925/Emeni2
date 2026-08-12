@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Building2, Plus, Edit2, Trash2, Key, User as UserIcon, LogIn, ShieldCheck, Phone, Award } from 'lucide-react';
 import { Department, SafetyOfficer, User } from '../types';
-import { DataAccessLayer } from '../services/dal';
+import { DataAccessLayer, subscribeToDALChanges } from '../services/dal';
 import { ConfirmModal } from './ConfirmModal';
 
 interface DeptManagersAdminProps {
@@ -40,17 +40,22 @@ export const DeptManagersAdmin: React.FC<DeptManagersAdminProps> = ({ onBack, on
   useEffect(() => {
     loadDepartments();
     loadSafetyOfficers();
+    const unsubscribe = subscribeToDALChanges(() => {
+      loadDepartments(true);
+      loadSafetyOfficers(true);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const loadDepartments = async () => {
-    setLoadingDepts(true);
+  const loadDepartments = async (isBackground = false) => {
+    if (!isBackground) setLoadingDepts(true);
     const data = await DataAccessLayer.getDepartments();
     setDepartments(data);
     setLoadingDepts(false);
   };
 
-  const loadSafetyOfficers = async () => {
-    setLoadingOfficers(true);
+  const loadSafetyOfficers = async (isBackground = false) => {
+    if (!isBackground) setLoadingOfficers(true);
     const data = await DataAccessLayer.getSafetyOfficers();
     setSafetyOfficers(data);
     setLoadingOfficers(false);
