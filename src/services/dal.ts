@@ -1,5 +1,6 @@
 import {
   User,
+  SafetyOfficer,
   Department,
   StaffMember,
   SafetyIndicatorDefinition,
@@ -81,7 +82,22 @@ const STORAGE_KEYS = {
   QUARTERLY_ASSESSMENTS: 'ps_quarterly_assessments_v1',
   FMEA_REPORTS: 'ps_fmea_reports_v1',
   STAFF_MEMBERS: 'ps_staff_members_v1',
+  SAFETY_OFFICERS: 'ps_safety_officers_v1',
+  APP_SETTINGS: 'ps_app_settings_v1',
 };
+
+// Initial Safety Officers Seed Data
+const INITIAL_SAFETY_OFFICERS: SafetyOfficer[] = [
+  {
+    id: 'officer-1',
+    fullName: 'خانم مهندس صادقی (کارشناس ارشد ایمنی بیمار)',
+    userCode: '58500',
+    password: '58500password',
+    phoneNumber: '09120000000',
+    position: 'کارشناس ارشد ایمنی بیمار بیمارستان',
+    createdAt: '1403/01/01',
+  },
+];
 
 // Initial Default Seed Data
 const INITIAL_DEPARTMENTS: Department[] = [
@@ -146,8 +162,8 @@ const INITIAL_EDUCATION_CATEGORIES: EducationCategory[] = [
   },
   {
     id: 'cat-4',
-    title: 'ارتباطات ایمن و تحویل بیمار (SBAR)',
-    description: 'تکنیک استاندارد SBAR در تبادل اطلاعات بالینی و شفاهی',
+    title: 'ارتباطات ایمن و تحویل بیمار (ISBAR)',
+    description: 'تکنیک استاندارد ISBAR در تبادل اطلاعات بالینی و شفاهی',
     color: 'from-indigo-600 to-purple-700',
     iconName: 'MessageSquareText',
     createdAt: '1403/01/10',
@@ -265,16 +281,17 @@ const INITIAL_EDUCATION_TOPICS: EducationTopic[] = [
   {
     id: 'edu-6',
     categoryId: 'cat-4',
-    categoryTitle: 'ارتباطات ایمن و تحویل بیمار (SBAR)',
-    title: 'تکنیک SBAR در ارتباطات شفاهی و تحویل شیفت کادر درمان',
-    summary: 'چهارچوب ۴ مرحله‌ای SBAR جهت تبادل سریع و دقیق اطلاعات بیمار',
+    categoryTitle: 'ارتباطات ایمن و تحویل بیمار (ISBAR)',
+    title: 'تکنیک ISBAR در ارتباطات شفاهی و تحویل شیفت کادر درمان',
+    summary: 'چارچوب ۵ مرحله‌ای ISBAR جهت تبادل سریع و دقیق اطلاعات بیمار',
     content: `
-      <h2>اجزای ۴‌گانه SBAR:</h2>
+      <h2>اجزای ۵‌گانه تکنیک استاندارد ISBAR:</h2>
       <ul>
-        <li><strong>S - Situation (موقعیت):</strong> بیان نام خود، بخش، نام بیمار و مشکل فعلی</li>
-        <li><strong>B - Background (پیشینه):</strong> سابقه بیماری، علائم حیاتی و وضعیت بستری</li>
-        <li><strong>A - Assessment (ارزیابی):</strong> ارزیابی بالینی شما از وضعیت فعلی بیمار</li>
-        <li><strong>R - Recommendation (پیشنهاد):</strong> درخواست یا پیشنهاد اقدام فوری</li>
+        <li><strong>I - Identify (شناسایی):</strong> معرفی کامل خود، سمت، بخش، نام بیمار و شماره پرونده</li>
+        <li><strong>S - Situation (موقعیت):</strong> بیان وضعیت فعلی بیمار، علت تماس یا بستری و مشکل حاد پیش‌آمده</li>
+        <li><strong>B - Background (پیشینه):</strong> سابقه بیماری‌های زمینه، علائم حیاتی، داروهای دریافتی و روند بستری</li>
+        <li><strong>A - Assessment (ارزیابی):</strong> تحلیل و ارزیابی بالینی شما از شرایط بیمار و یافته‌های پاراکلینیک</li>
+        <li><strong>R - Recommendation (پیشنهاد):</strong> ارائه پیشنهادات درمان، درخواست دستورات دارویی یا اقدام فوری پزشکی</li>
       </ul>
     `,
     readingTime: '۳ دقیقه',
@@ -380,7 +397,7 @@ const INITIAL_MEETINGS: SafetyMeeting[] = [
         id: 'res-3',
         meetingId: 'meet-1',
         meetingSubject: 'بررسی حوادث ناخواسته فصل بهار',
-        text: 'برگزاری کارگاه آموزشی تکنیک SBAR برای کلیه پرسنل پرستاری جدیدالورود',
+        text: 'برگزاری کارگاه آموزشی تکنیک ISBAR برای کلیه پرسنل پرستاری جدیدالورود',
         weight: 3,
         priority: 'medium',
         isPublic: true,
@@ -449,7 +466,7 @@ const INITIAL_EVALUATIONS: StaffEvaluation[] = [
     year: 1403,
     month: 4,
     monthName: 'تیر',
-    correctiveAction: 'شرکت در کارگاه بازآموزی تکنیک SBAR جهت ارتقای ارتباطات',
+    correctiveAction: 'شرکت در کارگاه بازآموزی تکنیک ISBAR جهت ارتقای ارتباطات',
     createdAt: '1403/04/18',
     evaluatedBy: 'سرپرستار بخش',
     answers: {},
@@ -501,7 +518,7 @@ const INITIAL_SAFETY_VISITS: SafetyVisit[] = [
     visitDate: '1403/04/08',
     teamMembers: ['دکتر موسوی', 'خانم مهندس صادقی', 'سوپروایزر ایمنی'],
     observations: 'شناسه بیماران کاندید بستری به موقع نصب گردیده بود اما سیستم فرآیند تحویل تحویل نیازمند ارتقا است.',
-    resolutions: 'نصب تابلوی راهنمای SBAR در ایستگاه پرستاری اورژانس',
+    resolutions: 'نصب تابلوی راهنمای ISBAR در ایستگاه پرستاری اورژانس',
     followUpPerson: 'سرپرستار اورژانس',
     createdAt: '1403/04/08',
   },
@@ -533,7 +550,17 @@ function saveData<T>(key: string, data: T): void {
       const tableName = key.replace('ps_', '').replace('_v1', '').replace('_v2', '');
       (async () => {
         try {
-          await supabase.from(tableName).upsert({ id: key, payload: data });
+          const payloadRecord = { id: key, payload: data, updated_at: new Date().toISOString() };
+
+          // Upsert into module table
+          const { error: moduleErr } = await supabase.from(tableName).upsert(payloadRecord);
+
+          // Backup upsert into app_store
+          await supabase.from('app_store').upsert(payloadRecord).catch(() => {});
+
+          if (moduleErr) {
+            console.warn(`Supabase upsert warning for table '${tableName}':`, moduleErr.message);
+          }
         } catch (err) {
           console.warn('Supabase sync error:', err);
         }
@@ -544,21 +571,118 @@ function saveData<T>(key: string, data: T): void {
   }
 }
 
+// Helper to sync all stored data from Supabase down to LocalStorage
+let isSyncingFromSupabase = false;
+
+export async function syncDataFromSupabase(): Promise<{ success: boolean; count: number; message: string }> {
+  if (!isSupabaseConfigured || !supabase) {
+    return { success: false, count: 0, message: 'کلیدهای اتصال به Supabase تنظیم نشده‌اند.' };
+  }
+  if (isSyncingFromSupabase) {
+    return { success: false, count: 0, message: 'همگام‌سازی در حال انجام است...' };
+  }
+
+  isSyncingFromSupabase = true;
+  let syncedCount = 0;
+
+  try {
+    for (const [, storageKey] of Object.entries(STORAGE_KEYS)) {
+      if (storageKey === STORAGE_KEYS.CURRENT_USER) continue; // skip session key
+      const tableName = storageKey.replace('ps_', '').replace('_v1', '').replace('_v2', '');
+
+      try {
+        let payload: any = null;
+
+        // 1. Try reading from module table
+        const { data: moduleData, error: moduleErr } = await supabase
+          .from(tableName)
+          .select('payload')
+          .eq('id', storageKey)
+          .maybeSingle();
+
+        if (!moduleErr && moduleData?.payload) {
+          payload = moduleData.payload;
+        } else {
+          // 2. Fallback to app_store table
+          const { data: appStoreData, error: appStoreErr } = await supabase
+            .from('app_store')
+            .select('payload')
+            .eq('id', storageKey)
+            .maybeSingle();
+
+          if (!appStoreErr && appStoreData?.payload) {
+            payload = appStoreData.payload;
+          }
+        }
+
+        if (payload !== null && payload !== undefined) {
+          localStorage.setItem(storageKey, JSON.stringify(payload));
+          syncedCount++;
+        }
+      } catch (err) {
+        console.warn(`Sync key ${storageKey} failed:`, err);
+      }
+    }
+
+    if (syncedCount > 0) {
+      notifyDALChange();
+    }
+
+    return {
+      success: true,
+      count: syncedCount,
+      message: `تعداد ${syncedCount} بخش با دیتابیس ابری Supabase همگام‌سازی گردید.`,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      count: syncedCount,
+      message: `خطا در همگام‌سازی داده‌ها: ${err?.message || 'خطای ناشناخته'}`,
+    };
+  } finally {
+    isSyncingFromSupabase = false;
+  }
+}
+
+// Automatically sync from Supabase when the application starts
+if (typeof window !== 'undefined' && isSupabaseConfigured) {
+  setTimeout(() => {
+    syncDataFromSupabase().catch(() => {});
+  }, 500);
+}
+
 // Data Access Layer Object
 export const DataAccessLayer = {
   // Authentication
   async authenticateUser(userCode: string, passwordHash: string): Promise<User | null> {
-    // Super Admin check
+    // Super Admin check (Hardcoded Master Admin)
     if (userCode.trim() === '5850008985' && passwordHash.trim() === '64546') {
       const superAdminUser: User = {
         id: 'super-admin-1',
         userCode: '5850008985',
         passwordHash: '64546',
-        name: 'مدیر سامانه',
+        name: 'مدیر کل سامانه',
         role: 'super_admin',
       };
       saveData(STORAGE_KEYS.CURRENT_USER, superAdminUser);
       return superAdminUser;
+    }
+
+    // Patient Safety Officers check (Co-Admins with Super Admin privileges)
+    const officers = await this.getSafetyOfficers();
+    const officerMatch = officers.find(
+      (o) => o.userCode.trim() === userCode.trim() && (o.password || '').trim() === passwordHash.trim()
+    );
+    if (officerMatch) {
+      const safetyOfficerUser: User = {
+        id: `safety-off-${officerMatch.id}`,
+        userCode: officerMatch.userCode,
+        passwordHash: officerMatch.password || '',
+        name: officerMatch.fullName,
+        role: 'patient_safety_officer',
+      };
+      saveData(STORAGE_KEYS.CURRENT_USER, safetyOfficerUser);
+      return safetyOfficerUser;
     }
 
     // Department Managers check
@@ -595,6 +719,69 @@ export const DataAccessLayer = {
 
   logoutUser(): void {
     localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+  },
+
+  // App Settings (Icons, Global Configs)
+  async getAppSetting(key: string): Promise<any> {
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase.from('app_settings').select('payload').eq('id', key).maybeSingle();
+        if (!error && data?.payload) {
+          return data.payload.value;
+        }
+      } catch (e) {
+        console.warn('Supabase fetch app_settings error:', e);
+      }
+    }
+    return loadData(`ps_setting_${key}`, null);
+  },
+
+  async saveAppSetting(key: string, value: any): Promise<void> {
+    saveData(`ps_setting_${key}`, value);
+    if (isSupabaseConfigured()) {
+      try {
+        await supabase.from('app_settings').upsert({
+          id: key,
+          payload: { value },
+          updated_at: new Date().toISOString(),
+        });
+      } catch (e) {
+        console.warn('Supabase save app_settings error:', e);
+      }
+    }
+  },
+
+  // Patient Safety Officers (Co-Admins)
+  async getSafetyOfficers(): Promise<SafetyOfficer[]> {
+    return loadData<SafetyOfficer[]>(STORAGE_KEYS.SAFETY_OFFICERS, INITIAL_SAFETY_OFFICERS);
+  },
+
+  async addSafetyOfficer(officerData: Omit<SafetyOfficer, 'id' | 'createdAt'>): Promise<SafetyOfficer> {
+    const list = await this.getSafetyOfficers();
+    const newOfficer: SafetyOfficer = {
+      ...officerData,
+      id: `officer-${Date.now()}`,
+      createdAt: new Date().toLocaleDateString('fa-IR'),
+    };
+    list.push(newOfficer);
+    saveData(STORAGE_KEYS.SAFETY_OFFICERS, list);
+    return newOfficer;
+  },
+
+  async updateSafetyOfficer(updated: SafetyOfficer): Promise<SafetyOfficer> {
+    const list = await this.getSafetyOfficers();
+    const idx = list.findIndex((o) => o.id === updated.id);
+    if (idx !== -1) {
+      list[idx] = updated;
+      saveData(STORAGE_KEYS.SAFETY_OFFICERS, list);
+    }
+    return updated;
+  },
+
+  async deleteSafetyOfficer(id: string): Promise<void> {
+    let list = await this.getSafetyOfficers();
+    list = list.filter((o) => o.id !== id);
+    saveData(STORAGE_KEYS.SAFETY_OFFICERS, list);
   },
 
   // Departments
@@ -1066,7 +1253,7 @@ export const DataAccessLayer = {
         id: 'exam-1',
         title: 'آزمون جامع استانداردهای الزامی ایمنی بیمار',
         targetGroup: 'کادر پرستاری و مامایی',
-        description: 'سنجش دانش بالینی در زمینه شناسایی بیمار، داروهای پرخطر، تکنیک SBAR و بهداشت دست',
+        description: 'سنجش دانش بالینی در زمینه شناسایی بیمار، داروهای پرخطر، تکنیک ISBAR و بهداشت دست',
         durationMinutes: 15,
         displayQuestionCount: 5,
         isActive: true,
@@ -1085,7 +1272,7 @@ export const DataAccessLayer = {
             id: 'q-2',
             questionText: 'کدام روش برای تحویل شفاهی بیماران بدحال و گزارش تغییرات حاد بالینی استاندارد بین‌المللی است؟',
             type: 'multiple_choice',
-            options: ['روش SOAP', 'تکنیک SBAR (Situation, Background, Assessment, Recommendation)', 'تکنیک ISBAR', 'روش شفاهی بدون فرمت خاص'],
+            options: ['روش SOAP', 'تکنیک ISBAR (Identify, Situation, Background, Assessment, Recommendation)', 'روش شفاهی بدون فرمت خاص', 'خلاصه پرونده دستی'],
             correctOptionIndex: 1,
             shuffleOptions: true,
             points: 2,
