@@ -524,6 +524,36 @@ const INITIAL_SAFETY_VISITS: SafetyVisit[] = [
   },
 ];
 
+// Map STORAGE_KEYS to exact Supabase table names
+const STORAGE_KEY_TO_TABLE_MAP: Record<string, string> = {
+  [STORAGE_KEYS.USERS]: 'users',
+  [STORAGE_KEYS.DEPARTMENTS]: 'departments',
+  [STORAGE_KEYS.INDICATORS_DEF]: 'indicator_defs',
+  [STORAGE_KEYS.INDICATOR_RECORDS]: 'indicator_records',
+  [STORAGE_KEYS.EVALUATIONS]: 'staff_evaluations',
+  [STORAGE_KEYS.MEETINGS]: 'safety_meetings',
+  [STORAGE_KEYS.CHECKLISTS]: 'checklists',
+  [STORAGE_KEYS.CHECKLIST_RESPONSES]: 'checklist_responses',
+  [STORAGE_KEYS.ERROR_REPORTS]: 'error_reports',
+  [STORAGE_KEYS.EDUCATION_CATEGORIES]: 'edu_categories',
+  [STORAGE_KEYS.EDUCATION]: 'education_contents',
+  [STORAGE_KEYS.SCENARIOS]: 'safety_scenarios',
+  [STORAGE_KEYS.VISITS]: 'safety_visits',
+  [STORAGE_KEYS.ANNOUNCEMENTS]: 'safety_announcements',
+  [STORAGE_KEYS.QUIZ_EXAMS]: 'quiz_exams',
+  [STORAGE_KEYS.QUIZ_SUBMISSIONS]: 'quiz_submissions',
+  [STORAGE_KEYS.RCA_REPORTS]: 'rca_forms',
+  [STORAGE_KEYS.QUARTERLY_ASSESSMENTS]: 'quarterly_assessments',
+  [STORAGE_KEYS.FMEA_REPORTS]: 'fmea_forms',
+  [STORAGE_KEYS.STAFF_MEMBERS]: 'staff_members',
+  [STORAGE_KEYS.SAFETY_OFFICERS]: 'safety_officers',
+  [STORAGE_KEYS.APP_SETTINGS]: 'app_settings',
+};
+
+function getTableName(storageKey: string): string {
+  return STORAGE_KEY_TO_TABLE_MAP[storageKey] || 'app_store';
+}
+
 // Helper to safely load data from LocalStorage
 function loadData<T>(key: string, defaultValue: T): T {
   try {
@@ -546,8 +576,8 @@ function saveData<T>(key: string, data: T): void {
     notifyDALChange();
 
     // Async sync with Supabase if configured
-    if (isSupabaseConfigured && supabase) {
-      const tableName = key.replace('ps_', '').replace('_v1', '').replace('_v2', '');
+    if (isSupabaseConfigured() && supabase) {
+      const tableName = getTableName(key);
       (async () => {
         try {
           const payloadRecord = { id: key, payload: data, updated_at: new Date().toISOString() };
@@ -555,11 +585,11 @@ function saveData<T>(key: string, data: T): void {
           // Upsert into module table
           const { error: moduleErr } = await supabase.from(tableName).upsert(payloadRecord);
 
-          // Backup upsert into app_store
-          await supabase.from('app_store').upsert(payloadRecord).catch(() => {});
-
           if (moduleErr) {
             console.warn(`Supabase upsert warning for table '${tableName}':`, moduleErr.message);
+            if (tableName !== 'app_store') {
+              await supabase.from('app_store').upsert(payloadRecord).catch(() => {});
+            }
           }
         } catch (err) {
           console.warn('Supabase sync error:', err);
@@ -575,7 +605,7 @@ function saveData<T>(key: string, data: T): void {
 let isSyncingFromSupabase = false;
 
 export async function syncDataFromSupabase(): Promise<{ success: boolean; count: number; message: string }> {
-  if (!isSupabaseConfigured || !supabase) {
+  if (!isSupabaseConfigured() || !supabase) {
     return { success: false, count: 0, message: 'کلیدهای اتصال به Supabase تنظیم نشده‌اند.' };
   }
   if (isSyncingFromSupabase) {
@@ -588,7 +618,7 @@ export async function syncDataFromSupabase(): Promise<{ success: boolean; count:
   try {
     for (const [, storageKey] of Object.entries(STORAGE_KEYS)) {
       if (storageKey === STORAGE_KEYS.CURRENT_USER) continue; // skip session key
-      const tableName = storageKey.replace('ps_', '').replace('_v1', '').replace('_v2', '');
+      const tableName = getTableName(storageKey);
 
       try {
         let payload: any = null;
@@ -602,7 +632,7 @@ export async function syncDataFromSupabase(): Promise<{ success: boolean; count:
 
         if (!moduleErr && moduleData?.payload) {
           payload = moduleData.payload;
-        } else {
+        } else if (tableName !== 'app_store') {
           // 2. Fallback to app_store table
           const { data: appStoreData, error: appStoreErr } = await supabase
             .from('app_store')
@@ -645,7 +675,7 @@ export async function syncDataFromSupabase(): Promise<{ success: boolean; count:
 }
 
 // Automatically sync from Supabase when the application starts
-if (typeof window !== 'undefined' && isSupabaseConfigured) {
+if (typeof window !== 'undefined' && isSupabaseConfigured()) {
   setTimeout(() => {
     syncDataFromSupabase().catch(() => {});
   }, 500);
