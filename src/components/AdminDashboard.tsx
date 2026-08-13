@@ -29,6 +29,7 @@ import { User } from '../types';
 import {
   checkSupabaseConnection,
   COMPLETE_SUPABASE_SQL_SCRIPT,
+  COMPLETE_MYSQL_SQL_SCRIPT,
   getSupabaseConfig,
   reinitializeSupabase,
   clearCustomSupabaseConfig,
@@ -75,6 +76,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [copied, setCopied] = useState(false);
   const [showDbModal, setShowDbModal] = useState(false);
   const [activeDbTab, setActiveDbTab] = useState<'sql' | 'icon'>('sql');
+  const [sqlEngine, setSqlEngine] = useState<'postgres' | 'mysql'>('postgres');
 
   // Supabase Credentials State
   const initialConfig = getSupabaseConfig();
@@ -168,7 +170,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const handleCopySql = () => {
-    navigator.clipboard.writeText(COMPLETE_SUPABASE_SQL_SCRIPT);
+    const scriptToCopy = sqlEngine === 'postgres' ? COMPLETE_SUPABASE_SQL_SCRIPT : COMPLETE_MYSQL_SQL_SCRIPT;
+    navigator.clipboard.writeText(scriptToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 3000);
   };
@@ -538,6 +541,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </p>
                   </div>
 
+                  {/* SQL Engine Selection Tabs */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 rounded-2xl bg-slate-950 border border-slate-800">
+                    <div className="text-xs font-bold text-slate-300 flex items-center gap-2">
+                      <Database className="w-4 h-4 text-cyan-400" />
+                      <span>نوع موتور دیتابیس (SQL Engine):</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 p-1 rounded-xl bg-slate-900 border border-slate-800 w-full sm:w-auto">
+                      <button
+                        type="button"
+                        onClick={() => setSqlEngine('postgres')}
+                        className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-black transition flex items-center justify-center gap-2 cursor-pointer ${
+                          sqlEngine === 'postgres'
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md border border-indigo-400/30'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <span className="text-sm">🐘</span>
+                        <span>PostgreSQL (Supabase)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setSqlEngine('mysql')}
+                        className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-black transition flex items-center justify-center gap-2 cursor-pointer ${
+                          sqlEngine === 'mysql'
+                            ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-md border border-emerald-400/30'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <span className="text-sm">🐬</span>
+                        <span>MySQL (phpMyAdmin / MariaDB)</span>
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Action Buttons Row */}
                   <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
                     <div className="flex items-center gap-2">
@@ -571,29 +610,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       ) : (
                         <>
                           <Copy className="w-4 h-4" />
-                          <span>کپی تمام کد اسکریپت SQL</span>
+                          <span>کپی اسکریپت {sqlEngine === 'postgres' ? 'PostgreSQL (Supabase)' : 'MySQL (MariaDB)'}</span>
                         </>
                       )}
                     </button>
                   </div>
 
                   {/* Instructions */}
-                  <div className="p-4 rounded-2xl bg-blue-950/40 border border-blue-800/40 text-slate-300 text-xs leading-relaxed">
-                    <p className="font-bold text-amber-300 mb-1">💡 راهنمای ساخت/اصلاح دیتابیس:</p>
-                    <p>
-                      در صورتی که اولین بار است دیتابیس را راه‌اندازی می‌کنید یا تغییراتی در جداول ایجاد شده، دکمه <strong className="text-amber-300">کپی تمام کد اسکریپت SQL</strong> را بزنید، سپس در پنل Supabase خود وارد بخش <strong className="text-amber-300">SQL Editor</strong> شده، اسکریپت را Paste کرده و روی <strong className="text-emerald-400">Run</strong> کلیک نمایید.
-                    </p>
+                  <div className="p-4 rounded-2xl bg-blue-950/40 border border-blue-800/40 text-slate-300 text-xs leading-relaxed space-y-1">
+                    <p className="font-bold text-amber-300">💡 راهنمای ساخت/اصلاح دیتابیس ({sqlEngine === 'postgres' ? 'PostgreSQL / Supabase' : 'MySQL / phpMyAdmin'}):</p>
+                    {sqlEngine === 'postgres' ? (
+                      <p>
+                        در صورتی که از <strong className="text-cyan-300">Supabase</strong> استفاده می‌کنید، اسکریپت را کپی کرده و در پنل Supabase خود وارد بخش <strong className="text-amber-300">SQL Editor</strong> شده، اسکریپت را Paste کرده و روی <strong className="text-emerald-400">Run</strong> کلیک نمایید. این کد شامل تمامی ۲۳ جدول، سیاست‌های دسترسی (RLS Policies) و باکت‌های ذخیره‌سازی فایل (Storage Buckets) می‌باشد.
+                      </p>
+                    ) : (
+                      <p>
+                        در صورتی که از دیتابیس <strong className="text-emerald-300">MySQL یا MariaDB</strong> (مانند phpMyAdmin، cPanel، DirectAdmin یا Hostinger) استفاده می‌کنید، اسکریپت فوق را کپی کرده و در زبانه <strong className="text-amber-300">SQL</strong> پنل مدیریت دیتابیس خود اجرا (Execute/Run) نمایید. این کد شامل دیتابیس <code className="text-amber-200">safecare_db</code>، تمامی ۲۳ جدول با فیلدهای JSON، جداول شبیه‌ساز Storage Buckets و کلیدهای اصلی می‌باشد.
+                      </p>
+                    )}
                   </div>
 
                   {/* SQL Code View */}
                   <div className="rounded-2xl border border-slate-800 overflow-hidden">
                     <div className="px-4 py-2.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400">
-                      <span className="font-mono">supabase_schema_and_storage.sql</span>
-                      <Code2 className="w-4 h-4 text-amber-400" />
+                      <span className="font-mono text-cyan-300">
+                        {sqlEngine === 'postgres' ? 'supabase_postgres_schema_and_storage.sql' : 'mysql_mariadb_schema_and_buckets.sql'}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 font-bold text-slate-300">
+                          {sqlEngine === 'postgres' ? '🐘 PostgreSQL' : '🐬 MySQL / MariaDB'}
+                        </span>
+                        <Code2 className="w-4 h-4 text-amber-400" />
+                      </div>
                     </div>
                     <div className="p-4 bg-slate-950 text-emerald-400 font-mono text-xs dir-ltr text-left max-h-96 overflow-y-auto">
                       <pre className="whitespace-pre-wrap break-all select-all">
-                        {COMPLETE_SUPABASE_SQL_SCRIPT}
+                        {sqlEngine === 'postgres' ? COMPLETE_SUPABASE_SQL_SCRIPT : COMPLETE_MYSQL_SQL_SCRIPT}
                       </pre>
                     </div>
                   </div>
